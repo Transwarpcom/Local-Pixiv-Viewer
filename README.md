@@ -61,8 +61,10 @@
  * Nginx
  * SQLite3
 1. 安装依赖
+```text
 sudo apt update
 sudo apt install -y python3-pip python3-venv nginx ffmpeg sqlite3
+```
 
 2. 项目初始化
 假设你的部署目录为 /path/to/project：
