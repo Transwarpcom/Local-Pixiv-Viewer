@@ -66,20 +66,27 @@ sudo apt install -y python3-pip python3-venv nginx ffmpeg sqlite3
 
 2. 项目初始化
 假设你的部署目录为 /path/to/project：
+```text
 mkdir -p /path/to/project
 cd /path/to/project
+```
 
 # 创建虚拟环境
+```text
 python3 -m venv venv
 source venv/bin/activate
+```
 
 # 安装 Python 依赖
+```text
 pip install flask flask-login flask-babel werkzeug watchdog
+```
 
 3. 配置 Systemd 服务
 本项目包含两个核心服务：Web 服务和自动索引服务。
 Web 服务 (pixiv_web.service):
 请将 User, Group 和 WorkingDirectory 替换为你实际的用户和路径。
+```text
 [Unit]
 Description=Pixiv Clone Web App
 After=network.target
@@ -94,8 +101,10 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
+```
 
 自动索引服务 (pixiv_indexer.service):
+```text
 [Unit]
 Description=Pixiv Auto Indexer
 After=network.target
@@ -110,8 +119,10 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
+```
 
 4. 配置 Nginx
+```text
 server {
     listen 80;
     server_name your-domain.com; # 替换为你的域名
@@ -134,6 +145,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 }
+```
 
 📖 使用说明
  * 首次访问：打开网站，点击 Register 注册账号。
