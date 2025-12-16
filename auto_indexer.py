@@ -33,6 +33,7 @@ def init_db():
 
     c.execute('CREATE INDEX IF NOT EXISTS idx_user_id ON works (user_id)')
     c.execute('CREATE INDEX IF NOT EXISTS idx_tags ON works (tags)')
+    c.execute('CREATE INDEX IF NOT EXISTS idx_view_count ON works (view_count)')
     conn.commit()
     conn.close()
 
