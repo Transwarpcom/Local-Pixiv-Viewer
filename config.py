@@ -1,4 +1,5 @@
 import os
+import secrets
 
 # === 基础配置 ===
 # 获取当前脚本所在目录
@@ -11,8 +12,13 @@ DB_PATH = os.path.join(BASE_DIR, "pixiv.db")
 # 注意：此路径下应包含形如 "ArtistName-12345" 的文件夹
 DATA_DIR = "/mnt/data"
 
-# Flask 密钥 (生产环境请修改为随机字符串)
-SECRET_KEY = 'change_this_to_secure_random_string'
+# Flask 密钥
+# 优先从环境变量获取，如果没有则生成一个随机密钥（每次重启会变更，导致 session 失效）
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    SECRET_KEY = secrets.token_hex(32)
+    # 打印警告，告知用户正在使用临时密钥
+    print("WARNING: SECRET_KEY not set in environment. Using ephemeral random key. Sessions will not persist across restarts.")
 
 # 扫描间隔 (秒)
 SCAN_INTERVAL = 15
