@@ -11,6 +11,7 @@ import config
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # === Babel ===
 app.config['BABEL_DEFAULT_LOCALE'] = 'en'
@@ -41,6 +42,13 @@ def get_db():
     conn = sqlite3.connect(config.DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
 
 @app.template_filter('url_quote')
 def url_quote_filter(s): return quote(s, safe='/') if s else ""
