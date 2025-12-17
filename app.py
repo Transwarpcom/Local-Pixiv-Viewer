@@ -45,6 +45,11 @@ def get_db():
 @app.template_filter('url_quote')
 def url_quote_filter(s): return quote(s, safe='/') if s else ""
 
+@app.template_filter('thumbnail')
+def thumbnail_filter(s):
+    if not s: return ""
+    return f"{config.THUMBS_URL_PREFIX}{quote(s, safe='/')}"
+
 @app.template_filter('is_r18')
 def is_r18_filter(tags): return tags and ('R-18' in tags or 'R-18G' in tags)
 
@@ -217,7 +222,7 @@ def api_load_more():
     for work in works:
         item = {'id': work['id'], 'title': work['title'], 'user_id': work['user_id'], 'user_name': work['user_name'], 'work_type': work['work_type'], 'page_count': work['page_count'], 'link_url': f"/view/{work['id']}", 'img_src': "", 'tags': work['tags']}
         raw = work['cover_path'] if (work['work_type'] == 'Novel' and work['cover_path']) else work['file_path']
-        if raw: item['img_src'] = f"/files/{quote(raw, safe='/')}"
+        if raw: item['img_src'] = f"{config.THUMBS_URL_PREFIX}{quote(raw, safe='/')}"
         data.append(item)
     return jsonify(data)
 
