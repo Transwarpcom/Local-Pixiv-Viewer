@@ -125,7 +125,10 @@ def ranking():
 @login_required
 def following_feed():
     conn = get_db()
-    sql = "SELECT w.* FROM works w JOIN follows f ON w.user_id = f.followed_user_id WHERE f.follower_id = ? ORDER BY w.created_at DESC LIMIT 50"
+    # Optimized: Use ORDER BY w.id DESC instead of created_at.
+    # 1. Performance: w.id is the Primary Key (indexed), avoiding a slow sort on unindexed created_at.
+    # 2. Correctness: created_at is updated on every scan (file mtime/scan time), whereas id (Pixiv ID) is fixed and monotonic with creation time.
+    sql = "SELECT w.* FROM works w JOIN follows f ON w.user_id = f.followed_user_id WHERE f.follower_id = ? ORDER BY w.id DESC LIMIT 50"
     works = conn.execute(sql, (current_user.id,)).fetchall()
     conn.close()
     return render_template('index.html', works=works, title=_("Following Feed"))
