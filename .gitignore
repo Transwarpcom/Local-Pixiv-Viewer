@@ -1,3 +1,11 @@
-*.db
+venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.DS_Store
+*.db
+*.db-shm
+*.db-wal
+.coverage
+htmlcov/

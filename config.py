@@ -10,7 +10,11 @@ DB_PATH = os.path.join(BASE_DIR, "pixiv.db")
 
 # Pixiv 图片/小说 文件的实际存储路径 (请修改这里！)
 # 注意：此路径下应包含形如 "ArtistName-12345" 的文件夹
-DATA_DIR = "/mnt/data"
+DATA_DIR = os.environ.get('DATA_DIR', "/mnt/data")
+
+# 缩略图路径 (可选)
+THUMBS_DIR = os.environ.get('THUMBS_DIR')
+THUMBS_URL_PREFIX = "/thumbs/" if THUMBS_DIR else "/files/"
 
 # Flask 密钥
 # 优先从环境变量获取，如果没有则生成一个随机密钥（每次重启会变更，导致 session 失效）

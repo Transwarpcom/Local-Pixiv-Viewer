@@ -76,41 +76,62 @@ def scan_directory():
     conn.execute('PRAGMA journal_mode=WAL;')
     c = conn.cursor()
     
-    search_root = os.path.join(config.DATA_DIR, "pixiv")
-    if not os.path.exists(search_root): search_root = config.DATA_DIR
-
     works_buffer = {} 
 
-    for user_folder in os.listdir(search_root):
-        user_path = os.path.join(search_root, user_folder)
-        if not os.path.isdir(user_path): continue
-        u_match = re.match(r'(.*)-(\d+)$', user_folder)
-        if not u_match: continue
-        user_name, user_id = u_match.group(1), int(u_match.group(2))
+    roots_to_scan = []
+    # Check for specific subdirs
+    found_subdir = False
+    for subdir in ['pixiv', 'fanbox']:
+        p = os.path.join(config.DATA_DIR, subdir)
+        if os.path.exists(p):
+            roots_to_scan.append(subdir)
+            found_subdir = True
 
-        try: files = os.listdir(user_path)
-        except OSError: continue
-        
-        for f in files:
-            if not (f.endswith('.jpg') or f.endswith('.png') or f.endswith('.txt') or f.endswith('.zip') or f.endswith('.mp4')): continue
+    # Fallback to root if no subdirs found (legacy behavior)
+    if not found_subdir:
+        roots_to_scan.append('')
+
+    for root_name in roots_to_scan:
+        search_root = os.path.join(config.DATA_DIR, root_name)
+        if not os.path.exists(search_root): continue
+
+        try:
+            user_folders = os.listdir(search_root)
+        except OSError:
+            continue
+
+        for user_folder in user_folders:
+            user_path = os.path.join(search_root, user_folder)
+            if not os.path.isdir(user_path): continue
+            u_match = re.match(r'(.*)-(\d+)$', user_folder)
+            if not u_match: continue
+            user_name, user_id = u_match.group(1), int(u_match.group(2))
+
+            try: files = os.listdir(user_path)
+            except OSError: continue
             
-            if search_root == config.DATA_DIR: full_path = os.path.join(user_folder, f)
-            else: full_path = os.path.join("pixiv", user_folder, f)
-            
-            meta = parse_filename(f)
-            wid = meta['id']
-            
-            if wid not in works_buffer:
-                works_buffer[wid] = {'meta': meta, 'user_id': user_id, 'user_name': user_name, 'files': [], 'novel_txt': None}
-            
-            if meta['type'] == 'Novel':
-                works_buffer[wid]['novel_txt'] = full_path
-                works_buffer[wid]['meta'] = meta 
-                works_buffer[wid]['meta']['type'] = 'Novel'
-            elif meta['type'] == 'Illustration':
-                works_buffer[wid]['files'].append((meta['p_num'], full_path))
-                if works_buffer[wid]['meta']['type'] != 'Novel' and meta['p_num'] == 0:
+            for f in files:
+                if not (f.endswith('.jpg') or f.endswith('.png') or f.endswith('.txt') or f.endswith('.zip') or f.endswith('.mp4')): continue
+
+                if root_name == '':
+                    full_path = os.path.join(user_folder, f)
+                else:
+                    full_path = os.path.join(root_name, user_folder, f)
+
+                meta = parse_filename(f)
+                wid = meta['id']
+
+                if wid not in works_buffer:
+                    works_buffer[wid] = {'meta': meta, 'user_id': user_id, 'user_name': user_name, 'files': [], 'novel_txt': None}
+
+                if meta['type'] == 'Novel':
+                    works_buffer[wid]['novel_txt'] = full_path
                     works_buffer[wid]['meta'] = meta
+                    works_buffer[wid]['meta']['type'] = 'Novel'
+                elif meta['type'] == 'Illustration':
+                    works_buffer[wid]['files'].append((meta['p_num'], full_path))
+                    if works_buffer[wid]['meta']['type'] != 'Novel' and meta['p_num'] == 0:
+                        works_buffer[wid]['meta'] = meta
 
     for wid, data in works_buffer.items():
         meta = data['meta']
