@@ -107,6 +107,11 @@
                 <i class="bi bi-clock-history"></i> {{ _('History') }}
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('main.xp_dashboard') }}">
+                <i class="bi bi-bar-chart-fill"></i> {{ _('XP Dashboard') }}
+              </a>
+            </li>
             {% endif %}
           </ul>
           <form class="d-flex me-3 search-form" action="{{ url_for('main.search') }}">

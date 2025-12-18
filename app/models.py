@@ -105,3 +105,5 @@ class History(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     work_id = db.Column(db.Integer, db.ForeignKey('works.id'), nullable=False)
     viewed_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    work = db.relationship('Work')

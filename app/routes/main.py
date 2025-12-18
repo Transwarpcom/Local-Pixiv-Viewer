@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 from flask import Blueprint, render_template, request, current_app, send_from_directory, abort, flash, session, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import desc, asc
@@ -101,6 +102,33 @@ def history():
     history_query = History.query.filter_by(user_id=current_user.id).order_by(desc(History.viewed_at))
     pagination = history_query.paginate(page=page, per_page=per_page)
     return render_template('main/history.html', pagination=pagination)
+
+@bp.route('/xp')
+@login_required
+def xp_dashboard():
+    # 1. Top Tags from History
+    history_items = History.query.filter_by(user_id=current_user.id).all()
+    history_tags = []
+    for item in history_items:
+        if item.work and item.work.tags:
+            tags = [t.strip() for t in item.work.tags.split(',') if t.strip()]
+            history_tags.extend(tags)
+
+    history_tag_counts = Counter(history_tags).most_common(20)
+
+    # 2. Top Tags from Liked Works
+    liked_works = current_user.liked_works.all()
+    liked_tags = []
+    for work in liked_works:
+        if work.tags:
+            tags = [t.strip() for t in work.tags.split(',') if t.strip()]
+            liked_tags.extend(tags)
+
+    liked_tag_counts = Counter(liked_tags).most_common(20)
+
+    return render_template('main/xp_dashboard.html',
+                           history_tag_counts=history_tag_counts,
+                           liked_tag_counts=liked_tag_counts)
 
 @bp.route('/data/<path:filename>')
 def serve_data(filename):
