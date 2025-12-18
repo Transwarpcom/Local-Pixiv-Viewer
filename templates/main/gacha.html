@@ -3,15 +3,15 @@
 
 {% block content %}
 <div class="container text-center mt-5">
-    <h1 class="mb-4 display-4">Gacha Time!</h1>
-    <p class="lead mb-5">Discover hidden gems or revisit old favorites.</p>
+    <h1 class="mb-4 display-4">{{ _('Gacha Time!') }}</h1>
+    <p class="lead mb-5">{{ _('Discover hidden gems or revisit old favorites.') }}</p>
 
     <div id="gacha-machine" class="mb-5">
         <div id="gacha-animation" style="display: none; height: 300px; align-items: center; justify-content: center;">
             <div class="spinner-border text-primary" style="width: 5rem; height: 5rem;" role="status">
-                <span class="visually-hidden">Loading...</span>
+                <span class="visually-hidden">{{ _('Loading...') }}</span>
             </div>
-            <p class="mt-3 w-100">Summoning...</p>
+            <p class="mt-3 w-100">{{ _('Summoning...') }}</p>
         </div>
 
         <div id="results-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-5 g-4 justify-content-center" style="display: none;">
@@ -20,10 +20,10 @@
 
         <div class="mt-5 btn-group">
             <button id="pull-btn-1" class="btn btn-lg btn-primary rounded-pill px-4 py-3 shadow mx-2" onclick="pullGacha(1)">
-                <i class="bi bi-star"></i> 1x Pull
+                <i class="bi bi-star"></i> {{ _('1x Pull') }}
             </button>
             <button id="pull-btn-10" class="btn btn-lg btn-warning rounded-pill px-4 py-3 shadow mx-2 text-dark fw-bold" onclick="pullGacha(10)">
-                <i class="bi bi-stars"></i> 10x Pull
+                <i class="bi bi-stars"></i> {{ _('10x Pull') }}
             </button>
         </div>
     </div>
@@ -79,13 +79,13 @@ function pullGacha(count) {
 
                     // Rarity
                     if (item.view_count > 100) {
-                        header.textContent = "UR";
+                        header.textContent = "{{ _('UR') }}";
                         header.className = "card-header bg-danger text-white fw-bold small";
                     } else if (item.view_count > 20) {
-                        header.textContent = "SSR";
+                        header.textContent = "{{ _('SSR') }}";
                         header.className = "card-header bg-warning text-dark fw-bold small";
                     } else {
-                        header.textContent = "R";
+                        header.textContent = "{{ _('R') }}";
                         header.className = "card-header bg-info text-white fw-bold small";
                     }
 

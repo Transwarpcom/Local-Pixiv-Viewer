@@ -124,11 +124,11 @@
             </li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMore" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-grid-fill"></i> More
+                <i class="bi bi-grid-fill"></i> {{ _('More') }}
               </a>
               <ul class="dropdown-menu" aria-labelledby="navbarDropdownMore">
-                <li><a class="dropdown-item" href="{{ url_for('main.gacha') }}">Gacha</a></li>
-                <li><a class="dropdown-item" href="{{ url_for('main.slideshow') }}">Zen Mode</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.gacha') }}">{{ _('Gacha') }}</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.slideshow') }}">{{ _('Zen Mode') }}</a></li>
               </ul>
             </li>
             {% endif %}
@@ -138,7 +138,7 @@
             <button class="btn" type="submit" aria-label="{{ _('Search') }}">
               <i class="bi bi-search"></i>
             </button>
-            <button class="btn" type="button" aria-label="Image Search" data-bs-toggle="modal" data-bs-target="#imageSearchModal">
+            <button class="btn" type="button" aria-label="{{ _('Image Search') }}" data-bs-toggle="modal" data-bs-target="#imageSearchModal">
               <i class="bi bi-camera"></i>
             </button>
           </form>
@@ -204,17 +204,17 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Image Search</h5>
+            <h5 class="modal-title">{{ _('Image Search') }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form action="{{ url_for('main.search_image') }}" method="post" enctype="multipart/form-data">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
               <div class="mb-3">
-                <label for="imageInput" class="form-label">Upload Image</label>
+                <label for="imageInput" class="form-label">{{ _('Upload Image') }}</label>
                 <input class="form-control" type="file" id="imageInput" name="file" accept="image/*" required>
               </div>
-              <button type="submit" class="btn btn-primary w-100">Search</button>
+              <button type="submit" class="btn btn-primary w-100">{{ _('Search') }}</button>
             </form>
           </div>
         </div>

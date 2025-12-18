@@ -3,14 +3,14 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>XP Dashboard</h2>
-    <p class="text-muted">Analyze your preferences (XP) based on viewing history and likes.</p>
+    <h2>{{ _('XP Dashboard') }}</h2>
+    <p class="text-muted">{{ _('Analyze your preferences (XP) based on viewing history and likes.') }}</p>
 
     <!-- Charts Row -->
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header">Top Artists (History)</div>
+                <div class="card-header">{{ _('Top Artists (History)') }}</div>
                 <div class="card-body">
                     <canvas id="artistChart"></canvas>
                 </div>
@@ -18,7 +18,7 @@
         </div>
         <div class="col-md-6">
              <div class="card h-100">
-                <div class="card-header">Activity Heatmap (Hour of Day)</div>
+                <div class="card-header">{{ _('Activity Heatmap (Hour of Day)') }}</div>
                 <div class="card-body">
                     <canvas id="activityChart"></canvas>
                 </div>
@@ -29,7 +29,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">Tag Word Cloud (Liked)</div>
+                <div class="card-header">{{ _('Tag Word Cloud (Liked)') }}</div>
                 <div class="card-body">
                      <!-- Simple word cloud using flexbox and font-size scaling -->
                      <div class="d-flex flex-wrap justify-content-center align-items-center" style="gap: 15px;">
@@ -49,7 +49,7 @@
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Top Tags (History)</h5>
+                    <h5 class="mb-0">{{ _('Top Tags (History)') }}</h5>
                 </div>
                 <div class="card-body">
                     {% if history_tag_counts %}
@@ -57,8 +57,8 @@
                             <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Tag</th>
-                                        <th>Count</th>
+                                        <th>{{ _('Tag') }}</th>
+                                        <th>{{ _('Count') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -83,7 +83,7 @@
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">Top Tags (Liked)</h5>
+                    <h5 class="mb-0">{{ _('Top Tags (Liked)') }}</h5>
                 </div>
                 <div class="card-body">
                     {% if liked_tag_counts %}
@@ -91,8 +91,8 @@
                             <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Tag</th>
-                                        <th>Count</th>
+                                        <th>{{ _('Tag') }}</th>
+                                        <th>{{ _('Count') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const activityData = {
         labels: Array.from({length: 24}, (_, i) => i + ':00'),
         datasets: [{
-            label: 'Views per Hour',
+            label: "{{ _('Views per Hour') }}",
             data: {{ activity_data|tojson }},
             backgroundColor: 'rgba(54, 162, 235, 0.6)',
             borderColor: 'rgba(54, 162, 235, 1)',
