@@ -7,8 +7,68 @@ from app.models import Work, History, User, work_likes, bookmarks, Series
 from app.extensions import db
 import imagehash
 from PIL import Image as PILImage
+import random
+from sqlalchemy.sql.expression import func
+from app.services.tagger import tagger
 
 bp = Blueprint('main', __name__)
+
+@bp.route('/gacha')
+def gacha():
+    return render_template('main/gacha.html')
+
+@bp.route('/gacha/pull')
+def gacha_pull():
+    # Fetch a random work
+    # SQLite optimization for random row:
+    # work = Work.query.order_by(func.random()).first()
+    # But func.random() can be slow on large tables.
+    # However, this is "Pixiv Local", likely < 100k works. Acceptable.
+
+    work = Work.query.order_by(func.random()).first()
+
+    if not work:
+        return {'error': 'No works found in database.'}, 404
+
+    return {
+        'id': work.id,
+        'title': work.title,
+        'url': url_for('main.detail', work_id=work.id),
+        'thumb_url': url_for('main.serve_thumbs', filename=work.cover_path) if work.cover_path else '',
+        'view_count': work.view_count
+    }
+
+@bp.route('/slideshow')
+def slideshow():
+    return render_template('main/slideshow.html')
+
+@bp.route('/slideshow/data')
+def slideshow_data():
+    # Get top 100 works by view count (random shuffle of top 200?)
+    # For now just top 50 descending view count
+    works = Work.query.order_by(desc(Work.view_count)).limit(50).all()
+
+    # Shuffle them to make it interesting each time? Or just top sorted.
+    # Let's shuffle the top 50 in python
+    import random
+    random.shuffle(works)
+
+    data = []
+    for w in works:
+        # Use full image not thumbnail for slideshow if possible? Or thumb if high res enough.
+        # "Pixiv Local" thumb is 360x360 usually.
+        # But we serve raw files via serve_data. Let's use serve_data (original file) if it's an image.
+        if w.work_type == 'Illustration' and w.images.count() > 0:
+            # Pick first image
+            img = w.images.first()
+            if img:
+                data.append({
+                    'title': w.title,
+                    'artist': w.artist_name,
+                    'url': url_for('main.serve_data', filename=img.file_path)
+                })
+
+    return data
 
 @bp.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -30,6 +90,44 @@ def index():
     # ID is chronologically correct for Pixiv works.
     works = Work.query.order_by(desc(Work.id)).paginate(page=page, per_page=per_page)
     return render_template('main/index.html', works=works)
+
+@bp.route('/work/<int:work_id>/read')
+def read_manga(work_id):
+    work = Work.query.get_or_404(work_id)
+    return render_template('main/reader.html', work=work)
+
+@bp.route('/work/<int:work_id>/autotag', methods=['POST'])
+@login_required
+def auto_tag(work_id):
+    work = Work.query.get_or_404(work_id)
+
+    # Check if we have a valid cover or image
+    target_path = None
+    if work.cover_path:
+         target_path = os.path.join(current_app.config['THUMBS_DIR'], work.cover_path)
+    elif work.images.count() > 0:
+         target_path = os.path.join(current_app.config['DATA_DIR'], work.images.first().file_path)
+
+    if target_path:
+        new_tags = tagger.tag_image(target_path)
+        if new_tags:
+            current_tags = set((work.tags or '').split(','))
+            # Clean empty
+            current_tags = {t.strip() for t in current_tags if t.strip()}
+
+            # Add new tags
+            for t in new_tags:
+                current_tags.add(t)
+
+            work.tags = ",".join(current_tags)
+            db.session.commit()
+            flash(f"Added tags: {', '.join(new_tags)}", 'success')
+        else:
+            flash("No tags detected.", 'info')
+    else:
+        flash("No image found to tag.", 'error')
+
+    return redirect(url_for('main.detail', work_id=work.id))
 
 @bp.route('/work/<int:work_id>')
 def detail(work_id):
@@ -228,12 +326,25 @@ def xp_dashboard():
     # 1. Top Tags from History
     history_items = History.query.filter_by(user_id=current_user.id).all()
     history_tags = []
-    for item in history_items:
-        if item.work and item.work.tags:
-            tags = [t.strip() for t in item.work.tags.split(',') if t.strip()]
-            history_tags.extend(tags)
+    # Data for charts
+    artist_counts = Counter()
+    activity_hours = Counter()
 
-    history_tag_counts = Counter(history_tags).most_common(20)
+    for item in history_items:
+        if item.work:
+            if item.work.tags:
+                tags = [t.strip() for t in item.work.tags.split(',') if t.strip()]
+                history_tags.extend(tags)
+            if item.work.artist_name:
+                artist_counts[item.work.artist_name] += 1
+            if item.viewed_at:
+                activity_hours[item.viewed_at.hour] += 1
+
+    history_tag_counts = Counter(history_tags).most_common(50)
+    top_artists = artist_counts.most_common(10)
+
+    # Sort activity by hour 0-23
+    activity_data = [activity_hours[h] for h in range(24)]
 
     # 2. Top Tags from Liked Works
     liked_works = current_user.liked_works.all()
@@ -243,11 +354,13 @@ def xp_dashboard():
             tags = [t.strip() for t in work.tags.split(',') if t.strip()]
             liked_tags.extend(tags)
 
-    liked_tag_counts = Counter(liked_tags).most_common(20)
+    liked_tag_counts = Counter(liked_tags).most_common(50)
 
     return render_template('main/xp_dashboard.html',
                            history_tag_counts=history_tag_counts,
-                           liked_tag_counts=liked_tag_counts)
+                           liked_tag_counts=liked_tag_counts,
+                           top_artists=top_artists,
+                           activity_data=activity_data)
 
 @bp.route('/likes')
 @login_required
