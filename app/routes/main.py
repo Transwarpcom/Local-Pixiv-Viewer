@@ -113,31 +113,67 @@ def read_manga(work_id):
 def auto_tag(work_id):
     work = Work.query.get_or_404(work_id)
 
-    # Check if we have a valid cover or image
-    target_path = None
-    if work.cover_path:
-         target_path = os.path.join(current_app.config['THUMBS_DIR'], work.cover_path)
-    elif work.images.count() > 0:
-         target_path = os.path.join(current_app.config['DATA_DIR'], work.images.first().file_path)
+    # Distinguish between Novel and Image
+    if work.work_type == 'Novel':
+        if work.file_path:
+            full_path = os.path.join(current_app.config['DATA_DIR'], work.file_path)
+            if os.path.exists(full_path):
+                try:
+                    with open(full_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
 
-    if target_path:
-        new_tags = tagger.tag_image(target_path)
-        if new_tags:
-            current_tags = set((work.tags or '').split(','))
-            # Clean empty
-            current_tags = {t.strip() for t in current_tags if t.strip()}
+                    # Tag text
+                    from app.services.tagger import text_tagger
+                    new_tags = text_tagger.tag_text(content)
 
-            # Add new tags
-            for t in new_tags:
-                current_tags.add(t)
+                    if new_tags:
+                        current_tags = set((work.tags or '').split(','))
+                        current_tags = {t.strip() for t in current_tags if t.strip()}
+                        for t in new_tags:
+                            current_tags.add(t)
 
-            work.tags = ",".join(current_tags)
-            db.session.commit()
-            flash(f"Added tags: {', '.join(new_tags)}", 'success')
+                        work.tags = ",".join(current_tags)
+                        db.session.commit()
+                        flash(f"Added tags: {', '.join(new_tags)}", 'success')
+                    else:
+                        flash("No keywords extracted.", 'info')
+                except Exception as e:
+                    flash(f"Error reading novel: {e}", 'error')
+            else:
+                flash("Novel file not found.", 'error')
         else:
-            flash("No tags detected.", 'info')
-    else:
-        flash("No image found to tag.", 'error')
+            flash("No file associated.", 'error')
+
+    else: # Image/Illustration
+        # For image tagging, prefer the original image if available for better accuracy, or preview/thumb
+        # WD14 resize to 448x448, so source resolution matters less as long as it's not tiny.
+        # Use first image logic
+        target_path = None
+        if work.images.count() > 0:
+             target_path = os.path.join(current_app.config['DATA_DIR'], work.images.first().file_path)
+        elif work.cover_path: # Fallback to thumb
+             target_path = os.path.join(current_app.config['THUMBS_DIR'], work.cover_path)
+
+        if target_path and os.path.exists(target_path):
+            from app.services.tagger import image_tagger
+            new_tags = image_tagger.tag_image(target_path)
+
+            if new_tags and "error" not in new_tags and "model_error" not in new_tags:
+                current_tags = set((work.tags or '').split(','))
+                current_tags = {t.strip() for t in current_tags if t.strip()}
+
+                for t in new_tags:
+                    current_tags.add(t)
+
+                work.tags = ",".join(current_tags)
+                db.session.commit()
+                flash(f"Added tags: {', '.join(new_tags)}", 'success')
+            elif "model_error" in new_tags:
+                flash("Tagger model not loaded. Please check logs.", 'error')
+            else:
+                flash("No tags detected or error occurred.", 'info')
+        else:
+            flash("No image found to tag.", 'error')
 
     return redirect(url_for('main.detail', work_id=work.id))
 
