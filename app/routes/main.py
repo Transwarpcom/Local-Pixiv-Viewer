@@ -9,7 +9,6 @@ import imagehash
 from PIL import Image as PILImage
 import random
 from sqlalchemy.sql.expression import func
-from app.services.tagger import tagger
 
 bp = Blueprint('main', __name__)
 
