@@ -81,7 +81,7 @@ class Work(db.Model):
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=True)
     series_order = db.Column(db.Integer, nullable=True)
 
-    images = db.relationship('Image', backref='work', lazy='dynamic', cascade='all, delete-orphan')
+    images = db.relationship('Image', backref='work', lazy='dynamic', cascade='all, delete-orphan', order_by='Image.p_num')
     comments = db.relationship('Comment', backref='work', lazy='dynamic', cascade='all, delete-orphan')
 
 class Image(db.Model):
