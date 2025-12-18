@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-12-18 10:46+0000\n"
+"POT-Creation-Date: 2025-12-18 11:07+0000\n"
 "PO-Revision-Date: 2025-12-18 08:39+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh\n"
@@ -34,25 +34,37 @@ msgstr "历史记录"
 msgid "XP Dashboard"
 msgstr ""
 
-#: templates/base.html:118 templates/base.html:119
+#: templates/base.html:117
+msgid "Likes"
+msgstr "收藏"
+
+#: templates/base.html:122
+msgid "Bookmarks"
+msgstr "书签"
+
+#: templates/base.html:128 templates/base.html:129
 msgid "Search"
 msgstr "搜索"
 
-#: templates/base.html:137
+#: templates/base.html:147
 msgid "Admin"
 msgstr "管理"
 
-#: templates/base.html:143
+#: templates/base.html:153
 msgid "Logout"
 msgstr "注销"
 
-#: templates/base.html:149
+#: templates/base.html:159
 msgid "Login"
 msgstr "登录"
 
-#: templates/base.html:154
+#: templates/base.html:164
 msgid "Register"
 msgstr "注册"
+
+#: templates/main/bookmarks.html:4
+msgid "Bookmarked Works"
+msgstr "书签作品"
 
 #: templates/main/detail.html:8
 msgid "By"
@@ -85,3 +97,7 @@ msgstr "下一篇"
 #: templates/main/detail.html:59
 msgid "Related Works"
 msgstr "相关作品"
+
+#: templates/main/likes.html:4
+msgid "Liked Works"
+msgstr "收藏作品"
