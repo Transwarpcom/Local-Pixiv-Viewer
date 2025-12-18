@@ -61,9 +61,22 @@ def detail(work_id):
             Work.series_id == work.series_id,
             Work.series_order > work.series_order
         ).order_by(asc(Work.series_order)).first()
-            
+
+    # Simple Related Works based on tag matching
+    related_works = []
+    if work.tags:
+        current_tags = [t.strip() for t in work.tags.split(',') if t.strip()]
+        if current_tags:
+            # Finding works that have at least one common tag, excluding current work
+            # Using simple LIKE OR query. For better performance/quality, we'd use a full-text search engine or better SQL logic
+            filters = [Work.tags.contains(tag) for tag in current_tags]
+            # Order by random or ID? Let's use ID desc for now.
+            # Limit to 4 for the UI
+            related_works = Work.query.filter(db.or_(*filters), Work.id != work.id).order_by(desc(Work.id)).limit(4).all()
+
     return render_template('main/detail.html', work=work, novel_content=novel_content,
-                           previous_in_series=previous_in_series, next_in_series=next_in_series)
+                           previous_in_series=previous_in_series, next_in_series=next_in_series,
+                           related_works=related_works)
 
 @bp.route('/series/<int:series_id>')
 def series_detail(series_id):

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-12-18 08:40+0000\n"
+"POT-Creation-Date: 2025-12-18 10:46+0000\n"
 "PO-Revision-Date: 2025-12-18 08:39+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,34 +18,70 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: templates/base.html:41
+#: templates/base.html:96
 msgid "Home"
 msgstr ""
 
-#: templates/base.html:46
+#: templates/base.html:101
 msgid "Ranking"
 msgstr ""
 
-#: templates/base.html:52
+#: templates/base.html:107
 msgid "History"
 msgstr ""
 
-#: templates/base.html:58 templates/base.html:59
+#: templates/base.html:112
+msgid "XP Dashboard"
+msgstr ""
+
+#: templates/base.html:118 templates/base.html:119
 msgid "Search"
 msgstr ""
 
-#: templates/base.html:77
+#: templates/base.html:137
 msgid "Admin"
 msgstr ""
 
-#: templates/base.html:83
+#: templates/base.html:143
 msgid "Logout"
 msgstr ""
 
-#: templates/base.html:89
+#: templates/base.html:149
 msgid "Login"
 msgstr ""
 
-#: templates/base.html:94
+#: templates/base.html:154
 msgid "Register"
+msgstr ""
+
+#: templates/main/detail.html:8
+msgid "By"
+msgstr ""
+
+#: templates/main/detail.html:9
+msgid "Views"
+msgstr ""
+
+#: templates/main/detail.html:10
+msgid "Type"
+msgstr ""
+
+#: templates/main/detail.html:12
+msgid "Series"
+msgstr ""
+
+#: templates/main/detail.html:20
+msgid "Previous in Series"
+msgstr ""
+
+#: templates/main/detail.html:22
+msgid "Series Overview"
+msgstr ""
+
+#: templates/main/detail.html:24
+msgid "Next in Series"
+msgstr ""
+
+#: templates/main/detail.html:59
+msgid "Related Works"
 msgstr ""
