@@ -6,6 +6,9 @@ import os
 import re
 import sqlite3
 import time
+import argparse
+import threading
+from PIL import Image
 import config
 
 def init_db():
@@ -74,6 +77,25 @@ def parse_filename(filename):
     else: meta['title'] = rest_name
     return meta
 
+def generate_thumbnail(source_path, dest_path):
+    if os.path.exists(dest_path): return
+    try:
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        # Handle non-image files if necessary, currently mainly for images
+        ext = os.path.splitext(source_path)[1].lower()
+        if ext in ['.jpg', '.jpeg', '.png', '.webp']:
+            with Image.open(source_path) as img:
+                img.thumbnail((360, 360))
+                if img.mode != 'RGB': img = img.convert('RGB')
+                # Save as JPEG but keep original extension in path for simplicity of mapping,
+                # OR append .jpg. Appending .jpg is safer but requires URL mapping change.
+                # Current decision: keep original extension in filename on disk but write JPEG content?
+                # No, that's confusing.
+                # Let's save as .jpg. The caller needs to provide dest_path ending in .jpg.
+                img.save(dest_path, 'JPEG', quality=85)
+    except Exception as e:
+        print(f"Failed to generate thumbnail for {source_path}: {e}")
+
 def scan_directory():
     # 增加超时防止 locked
     conn = sqlite3.connect(config.DB_PATH, timeout=30)
@@ -122,6 +144,14 @@ def scan_directory():
                 else:
                     full_path = os.path.join(root_name, user_folder, f)
 
+                real_full_path = os.path.join(config.DATA_DIR, full_path)
+
+                # Thumbnail Generation
+                if config.THUMBS_DIR:
+                    # Append .jpg to the filename so we know it's a thumbnail and a JPEG
+                    thumb_dest = os.path.join(config.THUMBS_DIR, full_path + '.jpg')
+                    generate_thumbnail(real_full_path, thumb_dest)
+
                 meta = parse_filename(f)
                 wid = meta['id']
 
@@ -166,10 +196,20 @@ def scan_directory():
     conn.commit()
     conn.close()
 
-if __name__ == '__main__':
-    init_db()
+def loop():
     print(f"Start scanning {config.DATA_DIR} every {config.SCAN_INTERVAL} seconds...")
     while True:
         try: scan_directory()
         except Exception as e: print(f"Error: {e}")
         time.sleep(config.SCAN_INTERVAL)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--once', action='store_true', help='Run scan once and exit')
+    args = parser.parse_args()
+
+    init_db()
+    if args.once:
+        scan_directory()
+    else:
+        loop()

@@ -60,6 +60,9 @@ def url_quote_filter(s): return quote(s, safe='/') if s else ""
 @app.template_filter('thumbnail')
 def thumbnail_filter(s):
     if not s: return ""
+    # If using generated thumbnails, we appended .jpg
+    if config.THUMBS_DIR:
+        return f"{config.THUMBS_URL_PREFIX}{quote(s, safe='/')}.jpg"
     return f"{config.THUMBS_URL_PREFIX}{quote(s, safe='/')}"
 
 @app.template_filter('is_r18')
@@ -333,5 +336,20 @@ def sw():
 def serve_file(filename):
     return send_from_directory(config.DATA_DIR, filename)
 
+@app.route('/thumbs/<path:filename>')
+def serve_thumb(filename):
+    if config.THUMBS_DIR:
+        return send_from_directory(config.THUMBS_DIR, filename)
+    else:
+        return send_from_directory(config.DATA_DIR, filename)
+
+def background_indexer():
+    import auto_indexer
+    import threading
+    auto_indexer.init_db()
+    t = threading.Thread(target=auto_indexer.loop, daemon=True)
+    t.start()
+
 if __name__ == '__main__':
+    background_indexer()
     app.run(host='0.0.0.0', port=5000)
