@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, request, current_app, send_from_directory, abort, flash
+from flask import Blueprint, render_template, request, current_app, send_from_directory, abort, flash, session, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import desc, asc
 from app.models import Work, History, User, work_likes, bookmarks, Series
@@ -106,3 +106,9 @@ def serve_data(filename):
 @bp.route('/thumbs/<path:filename>')
 def serve_thumbs(filename):
     return send_from_directory(current_app.config['THUMBS_DIR'], filename)
+
+@bp.route('/set_language/<lang_code>')
+def set_language(lang_code):
+    if lang_code in ['zh', 'en']:
+        session['locale'] = lang_code
+    return redirect(request.referrer or url_for('main.index'))

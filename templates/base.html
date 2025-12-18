@@ -36,25 +36,64 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto">
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.index') }}">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.ranking') }}">Ranking</a></li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('main.index') }}">
+                <i class="bi bi-house-door"></i> {{ _('Home') }}
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('main.ranking') }}">
+                <i class="bi bi-bar-chart"></i> {{ _('Ranking') }}
+              </a>
+            </li>
             {% if current_user.is_authenticated %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.history') }}">History</a></li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('main.history') }}">
+                <i class="bi bi-clock-history"></i> {{ _('History') }}
+              </a>
+            </li>
             {% endif %}
           </ul>
           <form class="d-flex me-3" action="{{ url_for('main.search') }}">
-            <input class="form-control me-2" type="search" name="q" placeholder="Search" aria-label="Search" value="{{ request.args.get('q', '') }}">
-            <button class="btn btn-outline-light" type="submit">Search</button>
+            <input class="form-control me-2" type="search" name="q" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}" value="{{ request.args.get('q', '') }}">
+            <button class="btn btn-outline-light" type="submit" aria-label="{{ _('Search') }}">
+              <i class="bi bi-search"></i>
+            </button>
           </form>
           <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLanguage" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-globe"></i>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownLanguage">
+                <li><a class="dropdown-item" href="{{ url_for('main.set_language', lang_code='en') }}">English</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.set_language', lang_code='zh') }}">中文</a></li>
+              </ul>
+            </li>
             {% if current_user.is_authenticated %}
               {% if current_user.is_admin %}
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.index') }}">Admin</a></li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.index') }}">
+                  <i class="bi bi-gear"></i> {{ _('Admin') }}
+                </a>
+              </li>
               {% endif %}
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">Logout ({{ current_user.username }})</a></li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                  <i class="bi bi-box-arrow-right"></i> {{ _('Logout') }} ({{ current_user.username }})
+                </a>
+              </li>
             {% else %}
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Login</a></li>
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">Register</a></li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('auth.login') }}">
+                  <i class="bi bi-box-arrow-in-right"></i> {{ _('Login') }}
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('auth.register') }}">
+                  <i class="bi bi-person-plus"></i> {{ _('Register') }}
+                </a>
+              </li>
             {% endif %}
           </ul>
         </div>

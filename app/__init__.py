@@ -1,11 +1,14 @@
 import os
-from flask import Flask, current_app
+from flask import Flask, current_app, request, session
 from app.extensions import db, login_manager, babel
 from config import Config
 
 def get_locale():
-    # Simple locale selector
-    return 'zh'
+    # Check if user has explicitly set a language
+    if 'locale' in session:
+        return session['locale']
+    # Otherwise try to match browser preference
+    return request.accept_languages.best_match(['zh', 'en']) or 'zh'
 
 def create_app(config_class=Config):
     app = Flask(__name__, 
