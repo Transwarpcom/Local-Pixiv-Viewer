@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 from flask import Flask, render_template, request, abort, jsonify, send_from_directory, redirect, url_for, flash, session
 import sqlite3
 import os

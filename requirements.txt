@@ -4,3 +4,4 @@ flask-babel
 werkzeug
 watchdog
 gunicorn
+python-dotenv
