@@ -323,5 +323,11 @@ def manifest(): return send_from_directory('static', 'manifest.json')
 def sw(): 
     r = send_from_directory('static', 'sw.js'); r.headers['Content-Type'] = 'application/javascript'; return r
 
+# For development or simple deployment, serve files directly from Flask
+# In production with Nginx, this route might be bypassed by Nginx configuration
+@app.route('/files/<path:filename>')
+def serve_file(filename):
+    return send_from_directory(config.DATA_DIR, filename)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
