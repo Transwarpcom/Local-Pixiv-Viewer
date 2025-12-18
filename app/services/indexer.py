@@ -6,6 +6,7 @@ from app.models import Work, Image as ImageModel, Series
 from app.utils import generate_thumbnail
 import imagehash
 from PIL import Image as PILImage
+from app.services.translator import translator
 
 class Indexer:
     def __init__(self, config):
@@ -39,12 +40,6 @@ class Indexer:
             if filename.startswith('.'):
                 continue
                 
-            # Regex for Pixiv filename (Images and Novels)
-            # Image: 12345_p0.jpg, 12345.jpg
-            # Novel: 12345.txt (Usually)
-            
-            # Simple heuristic matching
-            # Matches: {ID} or {ID}_p{Page} or {ID}_...
             match_img = re.match(r'(\d+)(?:_p(\d+))?.*\.(jpg|png|gif|jpeg|webp)$', filename, re.IGNORECASE)
             match_txt = re.match(r'(\d+).*\.(txt)$', filename, re.IGNORECASE)
             
@@ -131,6 +126,10 @@ class Indexer:
                 else:
                     tags = rest
 
+        # Translate tags
+        if tags:
+            tags = translator.translate_list(tags)
+
         return {
             'id': int(pid) if pid and pid.isdigit() else None,
             'title': title,
@@ -203,14 +202,13 @@ class Indexer:
              if p_num == 0:
                  # If we haven't set a cover yet, or if this is p0, set it.
                  # For Novel, we might want to prioritize using this as cover if no cover exists.
-                 if not work.cover_path or work.cover_path.startswith('thumbs/'): # Overwrite generated thumb if we have better one?
-                     # Actually we just generate thumb for this image
+                 if not work.cover_path or work.cover_path.startswith('thumbs/'):
                      thumb_rel_path = os.path.join(str(artist_id), f"{work_id}.jpg")
                      thumb_full_path = os.path.join(self.thumbs_dir, thumb_rel_path)
                      if generate_thumbnail(full_path, thumb_full_path):
                          work.cover_path = thumb_rel_path
 
-                         # Calculate and save phash if not already present or if we are re-indexing cover
+                         # Calculate and save phash
                          try:
                              with PILImage.open(thumb_full_path) as img_pil:
                                  ph = str(imagehash.phash(img_pil))
@@ -221,6 +219,5 @@ class Indexer:
         elif work_type == 'Novel':
             # For novels, set file_path to the text file
             work.file_path = rel_path
-            # We don't change cover_path here unless we have a logic for novel covers (which we usually don't from txt files)
 
         db.session.commit()

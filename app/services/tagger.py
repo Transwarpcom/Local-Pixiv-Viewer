@@ -5,44 +5,7 @@ from PIL import Image
 from huggingface_hub import hf_hub_download
 import csv
 import jieba.analyse
-
-# Common Tag Translations (Simplified for Demo)
-# In a real app, this should be a large CSV loaded from disk
-TAG_TRANSLATIONS = {
-    "1girl": "1个女孩",
-    "solo": "单人",
-    "long_hair": "长发",
-    "short_hair": "短发",
-    "blue_eyes": "蓝眼",
-    "red_eyes": "红眼",
-    "black_hair": "黑发",
-    "blonde_hair": "金发",
-    "smile": "微笑",
-    "open_mouth": "张嘴",
-    "hat": "帽子",
-    "scenery": "风景",
-    "outdoors": "户外",
-    "indoors": "室内",
-    "day": "白天",
-    "night": "夜晚",
-    "water": "水",
-    "sky": "天空",
-    "cloud": "云",
-    "flower": "花",
-    "tree": "树",
-    "building": "建筑",
-    "ruins": "废墟",
-    "mountain": "山",
-    "ocean": "海洋",
-    "beach": "海滩",
-    "signature": "签名",
-    "watermark": "水印",
-    "explicit": "R-18",
-    "censored": "打码",
-    "monochrome": "单色",
-    "comic": "漫画",
-    "greyscale": "灰度"
-}
+from app.services.translator import translator
 
 class ImageTagger:
     def __init__(self):
@@ -81,21 +44,11 @@ class ImageTagger:
     def preprocess(self, image: Image.Image):
         # WD14 usually expects 448x448, BGR, normalized
         size = 448
-        # Resize with padding logic or simple resize?
-        # Simple resize to square is often "good enough" for tagging, but padding is better.
-        # Let's do simple resize for robustness/speed in this context.
-        # Actually, standard WD14 prep: Resize ensuring shortest side is 448, then center crop 448.
-        # Or just resize to 448x448 ignoring aspect ratio (simplest).
         img = image.convert("RGB").resize((size, size), Image.Resampling.BICUBIC)
 
         arr = np.array(img).astype(np.float32)
         # RGB -> BGR
         arr = arr[:, :, ::-1]
-
-        # Normalize? WD14 usually takes raw pixels [0, 255] or specific mean/std?
-        # SmilingWolf models usually expect input name "input_1".
-        # Checking repo info: usually raw pixels or standard normalization.
-        # Usually it's just raw pixels in BGR order for these ONNX exports.
 
         # Batch dimension
         arr = np.expand_dims(arr, 0)
@@ -116,15 +69,13 @@ class ImageTagger:
 
             # Get tags
             detected_tags = []
-            # First 4 tags are ratings usually (general, sensitive, questionable, explicit) for v2
-            # Check model specs. Usually tags list matches output index.
 
             for i, p in enumerate(probs):
                 if p > threshold:
                     if i < len(self.tags):
                         tag_name = self.tags[i]
                         # Translate if possible
-                        translated = TAG_TRANSLATIONS.get(tag_name, tag_name)
+                        translated = translator.translate(tag_name)
                         detected_tags.append(translated)
 
             return detected_tags
