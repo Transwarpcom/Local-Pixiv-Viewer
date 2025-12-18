@@ -7,7 +7,12 @@
         <div class="card thumb-card h-100">
             <a href="{{ url_for('main.detail', work_id=work.id) }}">
                 {% if work.cover_path %}
-                <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}" class="card-img-top work-thumb {% if 'R-18' in (work.tags or '') %}blur-r18{% endif %}" alt="{{ work.title }}">
+                <!-- Performance: Add lazy loading and async decoding for off-screen images -->
+                <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}"
+                     class="card-img-top work-thumb {% if 'R-18' in (work.tags or '') %}blur-r18{% endif %}"
+                     alt="{{ work.title }}"
+                     loading="lazy"
+                     decoding="async">
                 {% else %}
                 <div class="card-img-top work-thumb bg-secondary d-flex align-items-center justify-content-center text-white">
                     No Thumb

@@ -41,7 +41,11 @@
         {% else %}
             <div class="work-images">
                 {% for image in work.images %}
-                <img src="{{ url_for('main.serve_data', filename=image.file_path) }}" class="img-fluid mb-3 d-block mx-auto" alt="Page {{ image.p_num }}">
+                <img src="{{ url_for('main.serve_data', filename=image.file_path) }}"
+                     class="img-fluid mb-3 d-block mx-auto"
+                     alt="Page {{ image.p_num }}"
+                     loading="lazy"
+                     decoding="async">
                 {% endfor %}
             </div>
         {% endif %}

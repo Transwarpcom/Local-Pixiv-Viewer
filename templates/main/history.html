@@ -10,7 +10,11 @@
         <div class="card thumb-card h-100">
             <a href="{{ url_for('main.detail', work_id=work.id) }}">
                 {% if work.cover_path %}
-                <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}" class="card-img-top work-thumb" alt="{{ work.title }}">
+                <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}"
+                     class="card-img-top work-thumb"
+                     alt="{{ work.title }}"
+                     loading="lazy"
+                     decoding="async">
                 {% else %}
                 <div class="card-img-top work-thumb bg-secondary d-flex align-items-center justify-content-center text-white">
                     No Thumb
