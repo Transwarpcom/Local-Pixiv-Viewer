@@ -55,6 +55,12 @@ class User(UserMixin, db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+class Series(db.Model):
+    __tablename__ = 'series'
+    id = db.Column(db.Integer, primary_key=True) # Pixiv Series ID
+    title = db.Column(db.String(255))
+    works = db.relationship('Work', backref='series', lazy='dynamic')
+
 class Work(db.Model):
     __tablename__ = 'works'
     id = db.Column(db.Integer, primary_key=True)  # Pixiv ID
@@ -71,6 +77,9 @@ class Work(db.Model):
     # We can store artist_name/artist_id if parsed.
     artist_name = db.Column(db.String(255), nullable=True)
     artist_id = db.Column(db.Integer, nullable=True)
+
+    series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=True)
+    series_order = db.Column(db.Integer, nullable=True)
 
     images = db.relationship('Image', backref='work', lazy='dynamic', cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='work', lazy='dynamic', cascade='all, delete-orphan')
