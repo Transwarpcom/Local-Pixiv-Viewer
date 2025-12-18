@@ -11,7 +11,9 @@ bp = Blueprint('main', __name__)
 def index():
     page = request.args.get('page', 1, type=int)
     per_page = current_app.config['ITEMS_PER_PAGE']
-    works = Work.query.order_by(desc(Work.created_at)).paginate(page=page, per_page=per_page)
+    # Optimization: Sort by ID (indexed PK) instead of created_at (unindexed, unstable).
+    # ID is chronologically correct for Pixiv works.
+    works = Work.query.order_by(desc(Work.id)).paginate(page=page, per_page=per_page)
     return render_template('main/index.html', works=works)
 
 @bp.route('/work/<int:work_id>')
@@ -87,7 +89,8 @@ def search():
     if q:
         query = query.filter(Work.title.contains(q) | Work.tags.contains(q) | Work.artist_name.contains(q))
         
-    works = query.order_by(desc(Work.created_at)).paginate(page=page, per_page=per_page)
+    # Optimization: Sort by ID (indexed PK) instead of created_at.
+    works = query.order_by(desc(Work.id)).paginate(page=page, per_page=per_page)
     return render_template('main/search.html', works=works, q=q)
 
 @bp.route('/history')
