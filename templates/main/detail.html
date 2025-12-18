@@ -52,15 +52,80 @@
         </div>
         
         {% if work.work_type == 'Novel' %}
-            <div class="card bg-light">
-                <div class="card-body" style="white-space: pre-wrap; font-family: serif; line-height: 1.8;">
+            <div class="card mb-3">
+                <div class="card-header d-flex flex-wrap gap-2 align-items-center bg-light">
+                    <span class="me-2"><i class="bi bi-gear-fill"></i> Settings:</span>
+
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" onclick="adjustFontSize(-2)"><i class="bi bi-dash"></i></button>
+                        <span class="btn btn-outline-secondary disabled" id="font-size-display">16px</span>
+                        <button class="btn btn-outline-secondary" onclick="adjustFontSize(2)"><i class="bi bi-plus"></i></button>
+                    </div>
+
+                    <div class="btn-group btn-group-sm">
+                        <input type="radio" class="btn-check" name="writing-mode" id="wm-horizontal" autocomplete="off" checked onclick="setWritingMode('horizontal-tb')">
+                        <label class="btn btn-outline-secondary" for="wm-horizontal"><i class="bi bi-distribute-horizontal"></i></label>
+
+                        <input type="radio" class="btn-check" name="writing-mode" id="wm-vertical" autocomplete="off" onclick="setWritingMode('vertical-rl')">
+                        <label class="btn btn-outline-secondary" for="wm-vertical"><i class="bi bi-distribute-vertical"></i></label>
+                    </div>
+
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-light border" onclick="setBg('light')" title="Light">A</button>
+                        <button class="btn btn-warning border" style="background-color: #f4ecd8; border-color: #e9e0c9;" onclick="setBg('sepia')" title="Sepia">A</button>
+                        <button class="btn btn-dark border" onclick="setBg('dark')" title="Dark">A</button>
+                    </div>
+                </div>
+                <div class="card-body" id="novel-container" style="white-space: pre-wrap; font-family: serif; line-height: 1.8; min-height: 500px; font-size: 16px;">
                     {{ novel_content or 'No content.' }}
                 </div>
             </div>
+            <script>
+                let currentFontSize = 16;
+                const container = document.getElementById('novel-container');
+
+                function adjustFontSize(delta) {
+                    currentFontSize += delta;
+                    if (currentFontSize < 10) currentFontSize = 10;
+                    if (currentFontSize > 32) currentFontSize = 32;
+                    container.style.fontSize = currentFontSize + 'px';
+                    document.getElementById('font-size-display').innerText = currentFontSize + 'px';
+                }
+
+                function setWritingMode(mode) {
+                    container.style.writingMode = mode;
+                    if (mode === 'vertical-rl') {
+                        container.style.overflowX = 'auto';
+                        container.style.height = '80vh';
+                    } else {
+                        container.style.overflowX = 'visible';
+                        container.style.height = 'auto';
+                    }
+                }
+
+                function setBg(theme) {
+                    container.classList.remove('bg-light', 'bg-dark', 'text-white', 'text-dark');
+                    container.style.backgroundColor = '';
+                    container.style.color = '';
+
+                    if (theme === 'dark') {
+                        container.classList.add('bg-dark', 'text-white');
+                        container.parentElement.classList.add('bg-dark');
+                    } else if (theme === 'sepia') {
+                        container.style.backgroundColor = '#f4ecd8';
+                        container.style.color = '#5b4636';
+                        container.parentElement.classList.remove('bg-dark');
+                    } else {
+                        container.classList.add('bg-light', 'text-dark');
+                        container.parentElement.classList.remove('bg-dark');
+                    }
+                }
+            </script>
         {% else %}
             <div class="work-images">
+                {% set image_route = 'main.serve_preview' if current_user.is_authenticated and current_user.image_quality == 'compressed' else 'main.serve_data' %}
                 {% for image in work.images %}
-                <img src="{{ url_for('main.serve_data', filename=image.file_path) }}"
+                <img src="{{ url_for(image_route, filename=image.file_path) }}"
                      class="img-fluid mb-3 d-block mx-auto clickable-image"
                      alt="Page {{ image.p_num }}"
                      loading="lazy"
@@ -82,7 +147,7 @@
                     <div class="card h-100">
                         <a href="{{ url_for('main.detail', work_id=r_work.id) }}">
                             {% if r_work.cover_path %}
-                                <img src="{{ thumbnail_url(r_work.cover_path) }}" class="card-img-top {% if 'R-18' in (r_work.tags or '') or 'R-18G' in (r_work.tags or '') %}blur-r18{% endif %}" alt="{{ r_work.title }}" loading="lazy">
+                                <img src="{{ thumbnail_url(r_work.cover_path) }}" class="card-img-top {% if (not current_user.is_authenticated or current_user.enable_r18_blur) and ('R-18' in (r_work.tags or '') or 'R-18G' in (r_work.tags or '')) %}blur-r18{% endif %}" alt="{{ r_work.title }}" loading="lazy">
                             {% else %}
                                 <div class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
                                     No Cover

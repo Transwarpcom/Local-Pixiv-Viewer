@@ -24,6 +24,30 @@
                             </label>
                         </div>
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Image Quality') }}</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="image_quality" id="qualOriginal" value="original" {% if current_user.image_quality == 'original' %}checked{% endif %}>
+                            <label class="form-check-label" for="qualOriginal">
+                                {{ _('Original Quality') }}
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="image_quality" id="qualCompressed" value="compressed" {% if current_user.image_quality == 'compressed' %}checked{% endif %}>
+                            <label class="form-check-label" for="qualCompressed">
+                                {{ _('Compressed (Faster)') }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="blurToggle" name="enable_r18_blur" {% if current_user.enable_r18_blur %}checked{% endif %}>
+                            <label class="form-check-label" for="blurToggle">{{ _('Blur R-18/R-18G Thumbnails') }}</label>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary">{{ _('Save Settings') }}</button>
                 </form>
             </div>
