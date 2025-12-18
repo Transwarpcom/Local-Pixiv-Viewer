@@ -48,6 +48,7 @@ class Indexer:
             
             if match_img:
                 work_id = int(match_img.group(1))
+                # Initial guess for p_num
                 p_num = int(match_img.group(2)) if match_img.group(2) is not None else 0
                 self._index_file(work_id, p_num, artist_id, artist_name, full_artist_path, filename, 'Illustration')
             elif match_txt:
@@ -97,6 +98,8 @@ class Indexer:
         tags = ""
         tags_parts = []
 
+        p_override = None
+
         # Part 1+: Tags, or p{Page}-{Title}, or just tags
         if len(parts) > 1:
             # Check if parts[1] is p{Page}-{Title}
@@ -106,6 +109,7 @@ class Indexer:
                 # If we found p{Page}-{Title}, use the title from here
                 # And assume subsequent parts are tags
                 # And we override the default title=pid
+                p_override = int(p_pattern.group(1))
                 title = p_pattern.group(2)
                 tags_parts = parts[2:]
             else:
@@ -131,7 +135,8 @@ class Indexer:
             'tags': tags,
             'series_id': series_id,
             'series_order': series_order,
-            'series_title': series_title
+            'series_title': series_title,
+            'p_override': p_override
         }
 
     def _index_file(self, work_id, p_num, artist_id, artist_name, dir_path, filename, work_type):
@@ -141,6 +146,10 @@ class Indexer:
         full_path = os.path.join(dir_path, filename)
         
         meta = self._parse_filename(filename)
+
+        # Use overridden p_num if available from filename parsing
+        if meta.get('p_override') is not None:
+            p_num = meta['p_override']
 
         if not work:
             work = Work(

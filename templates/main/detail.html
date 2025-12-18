@@ -5,11 +5,11 @@
     <div class="col-md-8">
         <h2>{{ work.title }}</h2>
         <p class="text-muted">
-            By {{ work.artist_name }} (ID: {{ work.artist_id }}) |
-            Views: {{ work.view_count }} |
-            Type: {{ work.work_type }}
+            {{ _('By') }} <a href="{{ url_for('main.search', q=work.artist_name) }}">{{ work.artist_name }}</a> (ID: {{ work.artist_id }}) |
+            {{ _('Views') }}: {{ work.view_count }} |
+            {{ _('Type') }}: {{ work.work_type }}
             {% if work.series %}
-            | Series: <a href="{{ url_for('main.series_detail', series_id=work.series.id) }}">{{ work.series.title }}</a>
+            | {{ _('Series') }}: <a href="{{ url_for('main.series_detail', series_id=work.series.id) }}">{{ work.series.title }}</a>
             (#{{ work.series_order }})
             {% endif %}
         </p>
@@ -17,18 +17,18 @@
         {% if work.series %}
         <div class="btn-group mb-3">
             {% if previous_in_series %}
-            <a href="{{ url_for('main.detail', work_id=previous_in_series.id) }}" class="btn btn-outline-primary">Previous in Series</a>
+            <a href="{{ url_for('main.detail', work_id=previous_in_series.id) }}" class="btn btn-outline-primary">{{ _('Previous in Series') }}</a>
             {% endif %}
-            <a href="{{ url_for('main.series_detail', series_id=work.series.id) }}" class="btn btn-outline-primary">Series Overview</a>
+            <a href="{{ url_for('main.series_detail', series_id=work.series.id) }}" class="btn btn-outline-primary">{{ _('Series Overview') }}</a>
             {% if next_in_series %}
-            <a href="{{ url_for('main.detail', work_id=next_in_series.id) }}" class="btn btn-outline-primary">Next in Series</a>
+            <a href="{{ url_for('main.detail', work_id=next_in_series.id) }}" class="btn btn-outline-primary">{{ _('Next in Series') }}</a>
             {% endif %}
         </div>
         {% endif %}
 
         <div class="mb-3">
             {% for tag in (work.tags or '').split(',') %}
-            <span class="badge bg-secondary">{{ tag }}</span>
+            <a href="{{ url_for('main.search', q=tag.strip()) }}" class="badge bg-secondary text-decoration-none">{{ tag.strip() }}</a>
             {% endfor %}
         </div>
         
@@ -42,13 +42,54 @@
             <div class="work-images">
                 {% for image in work.images %}
                 <img src="{{ url_for('main.serve_data', filename=image.file_path) }}"
-                     class="img-fluid mb-3 d-block mx-auto"
+                     class="img-fluid mb-3 d-block mx-auto clickable-image"
                      alt="Page {{ image.p_num }}"
                      loading="lazy"
-                     decoding="async">
+                     decoding="async"
+                     style="cursor: zoom-in;"
+                     data-bs-toggle="modal"
+                     data-bs-target="#imageModal"
+                     data-src="{{ url_for('main.serve_data', filename=image.file_path) }}">
                 {% endfor %}
             </div>
         {% endif %}
+
+        {% if related_works %}
+        <div class="mt-5">
+            <h3>{{ _('Related Works') }}</h3>
+            <div class="row row-cols-2 row-cols-md-4 g-4">
+                {% for r_work in related_works %}
+                <div class="col">
+                    <div class="card h-100">
+                        <a href="{{ url_for('main.detail', work_id=r_work.id) }}">
+                            {% if r_work.cover_path %}
+                                <img src="{{ thumbnail_url(r_work.cover_path) }}" class="card-img-top" alt="{{ r_work.title }}" loading="lazy">
+                            {% else %}
+                                <div class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    No Cover
+                                </div>
+                            {% endif %}
+                        </a>
+                        <div class="card-body p-2">
+                            <h6 class="card-title text-truncate"><a href="{{ url_for('main.detail', work_id=r_work.id) }}" class="text-dark text-decoration-none">{{ r_work.title }}</a></h6>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen" onclick="var m=bootstrap.Modal.getInstance(document.getElementById('imageModal')); if(m) m.hide();">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-body d-flex justify-content-center align-items-center p-0" style="background: rgba(0,0,0,0.9);">
+                    <img id="modalImage" src="" class="img-fluid" style="max-height: 100vh; max-width: 100vw;">
+                </div>
+            </div>
+        </div>
     </div>
     <div class="col-md-4">
         <div class="card mb-3">
@@ -93,6 +134,16 @@
 
 {% block scripts %}
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    var imageModal = document.getElementById('imageModal');
+    imageModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var src = button.getAttribute('data-src');
+        var modalImage = imageModal.querySelector('#modalImage');
+        modalImage.src = src;
+    });
+});
+
 {% if current_user.is_authenticated %}
 function toggleLike() {
     fetch('{{ url_for("api.like_work", work_id=work.id) }}', {method: 'POST'})
