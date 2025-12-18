@@ -14,7 +14,11 @@
         <div class="card h-100">
             <a href="{{ url_for('main.detail', work_id=work.id) }}">
                 {% if work.cover_path %}
-                <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}" class="card-img-top" alt="{{ work.title }}">
+                <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}"
+                     class="card-img-top"
+                     alt="{{ work.title }}"
+                     loading="lazy"
+                     decoding="async">
                 {% else %}
                 <div class="bg-secondary text-white d-flex justify-content-center align-items-center" style="height: 200px;">
                     No Cover
