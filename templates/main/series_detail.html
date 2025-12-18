@@ -15,7 +15,7 @@
             <a href="{{ url_for('main.detail', work_id=work.id) }}">
                 {% if work.cover_path %}
                 <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}"
-                     class="card-img-top"
+                     class="card-img-top {% if 'R-18' in (work.tags or '') or 'R-18G' in (work.tags or '') %}blur-r18{% endif %}"
                      alt="{{ work.title }}"
                      loading="lazy"
                      decoding="async">

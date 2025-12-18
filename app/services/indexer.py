@@ -4,6 +4,8 @@ from datetime import datetime
 from app.extensions import db
 from app.models import Work, Image as ImageModel, Series
 from app.utils import generate_thumbnail
+import imagehash
+from PIL import Image as PILImage
 
 class Indexer:
     def __init__(self, config):
@@ -207,6 +209,14 @@ class Indexer:
                      thumb_full_path = os.path.join(self.thumbs_dir, thumb_rel_path)
                      if generate_thumbnail(full_path, thumb_full_path):
                          work.cover_path = thumb_rel_path
+
+                         # Calculate and save phash if not already present or if we are re-indexing cover
+                         try:
+                             with PILImage.open(thumb_full_path) as img_pil:
+                                 ph = str(imagehash.phash(img_pil))
+                                 work.phash = ph
+                         except Exception as e:
+                             print(f"Error calculating hash for {work_id}: {e}")
         
         elif work_type == 'Novel':
             # For novels, set file_path to the text file

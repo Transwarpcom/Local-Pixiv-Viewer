@@ -27,7 +27,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    recommendation_mode = db.Column(db.String(20), default='tags') # 'tags' or 'similarity'
+
     # Relationships
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
     liked_works = db.relationship('Work', secondary=work_likes, backref=db.backref('liked_by', lazy='dynamic'), lazy='dynamic')
@@ -77,6 +78,8 @@ class Work(db.Model):
     # We can store artist_name/artist_id if parsed.
     artist_name = db.Column(db.String(255), nullable=True)
     artist_id = db.Column(db.Integer, nullable=True)
+
+    phash = db.Column(db.String(64), nullable=True) # Perceptual Hash
 
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=True)
     series_order = db.Column(db.Integer, nullable=True)

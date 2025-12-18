@@ -5,8 +5,22 @@ from flask_login import login_required, current_user
 from sqlalchemy import desc, asc
 from app.models import Work, History, User, work_likes, bookmarks, Series
 from app.extensions import db
+import imagehash
+from PIL import Image as PILImage
 
 bp = Blueprint('main', __name__)
+
+@bp.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    if request.method == 'POST':
+        mode = request.form.get('recommendation_mode')
+        if mode in ['tags', 'similarity']:
+            current_user.recommendation_mode = mode
+            db.session.commit()
+            flash('Settings updated.', 'success')
+        return redirect(url_for('main.settings'))
+    return render_template('main/settings.html')
 
 @bp.route('/')
 def index():
@@ -62,17 +76,41 @@ def detail(work_id):
             Work.series_order > work.series_order
         ).order_by(asc(Work.series_order)).first()
 
-    # Simple Related Works based on tag matching
+    # Related Works
     related_works = []
-    if work.tags:
-        current_tags = [t.strip() for t in work.tags.split(',') if t.strip()]
-        if current_tags:
-            # Finding works that have at least one common tag, excluding current work
-            # Using simple LIKE OR query. For better performance/quality, we'd use a full-text search engine or better SQL logic
-            filters = [Work.tags.contains(tag) for tag in current_tags]
-            # Order by random or ID? Let's use ID desc for now.
-            # Limit to 4 for the UI
-            related_works = Work.query.filter(db.or_(*filters), Work.id != work.id).order_by(desc(Work.id)).limit(4).all()
+    recommendation_mode = 'tags'
+    if current_user.is_authenticated and current_user.recommendation_mode:
+        recommendation_mode = current_user.recommendation_mode
+
+    if recommendation_mode == 'similarity' and work.phash:
+        # Sort by hamming distance. SQLite doesn't have bit count, so we have to do it in python or simple heuristic.
+        # Since we can't efficiently query hamming distance in standard SQL/SQLite without extensions:
+        # We fetch a candidate set (e.g. recent works or random works) and sort in Python.
+        # Ideally, we should use a BK-tree or specialized DB, but for "Pixiv Local" with SQLite, Python sorting on a subset is acceptable.
+
+        # Fetch candidate works (e.g. 1000 recent works to scan)
+        # Avoid fetching all if DB is huge.
+        candidates = Work.query.filter(Work.id != work.id, Work.phash != None).order_by(desc(Work.id)).limit(1000).all()
+
+        target_hash = imagehash.hex_to_hash(work.phash)
+
+        def calculate_distance(w):
+            try:
+                return target_hash - imagehash.hex_to_hash(w.phash)
+            except:
+                return 100 # Max distance if error
+
+        # Sort candidates by distance (ascending)
+        candidates.sort(key=calculate_distance)
+        related_works = candidates[:4]
+
+    else:
+        # Tag based (Fallback or Default)
+        if work.tags:
+            current_tags = [t.strip() for t in work.tags.split(',') if t.strip()]
+            if current_tags:
+                filters = [Work.tags.contains(tag) for tag in current_tags]
+                related_works = Work.query.filter(db.or_(*filters), Work.id != work.id).order_by(desc(Work.id)).limit(4).all()
 
     return render_template('main/detail.html', work=work, novel_content=novel_content,
                            previous_in_series=previous_in_series, next_in_series=next_in_series,
@@ -106,6 +144,74 @@ def search():
     # Optimization: Sort by ID (indexed PK) instead of created_at.
     works = query.order_by(desc(Work.id)).paginate(page=page, per_page=per_page)
     return render_template('main/search.html', works=works, q=q)
+
+@bp.route('/search/image', methods=['POST'])
+def search_image():
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.referrer or url_for('main.index'))
+    file = request.files['file']
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.referrer or url_for('main.index'))
+
+    if file:
+        try:
+            img = PILImage.open(file.stream)
+            target_hash = imagehash.phash(img)
+
+            # Find closest matches
+            # Similar logic to recommendation: fetch candidates and sort by distance
+            candidates = Work.query.filter(Work.phash != None).order_by(desc(Work.id)).limit(2000).all()
+
+            def calculate_distance(w):
+                try:
+                    return target_hash - imagehash.hex_to_hash(w.phash)
+                except:
+                    return 100
+
+            # Filter candidates with reasonable distance (e.g., < 20) and sort
+            matches = []
+            for w in candidates:
+                dist = calculate_distance(w)
+                if dist < 30: # arbitrary threshold for "somewhat similar"
+                    matches.append((w, dist))
+
+            matches.sort(key=lambda x: x[1])
+
+            # Extract just works
+            works_list = [m[0] for m in matches[:50]] # Top 50 results
+
+            # Manually paginate (basic)
+            page = 1
+            per_page = current_app.config['ITEMS_PER_PAGE']
+
+            # Mock pagination object or render a simple template
+            # For simplicity, let's reuse search.html with a custom list
+            # But search.html expects a pagination object usually.
+            # We can construct a simple class to mimic pagination or pass works list directly if template supports it.
+            # search.html uses `works.items` usually.
+
+            class MockPagination:
+                def __init__(self, items):
+                    self.items = items
+                    self.has_prev = False
+                    self.has_next = False
+                    self.page = 1
+                    self.prev_num = 0
+                    self.next_num = 0
+                    self.pages = 1
+
+                def iter_pages(self, left_edge=1, right_edge=1, left_current=2, right_current=2):
+                    return []
+
+            pagination = MockPagination(works_list)
+
+            return render_template('main/search.html', works=pagination, q=f"Image Search (Top {len(works_list)})")
+
+        except Exception as e:
+            flash(f'Error processing image: {e}')
+            return redirect(request.referrer or url_for('main.index'))
 
 @bp.route('/history')
 @login_required
