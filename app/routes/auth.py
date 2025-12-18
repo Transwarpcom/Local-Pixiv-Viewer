@@ -1,9 +1,16 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user
+from urllib.parse import urlparse, urljoin
 from app.models import User
 from app.extensions import db
 
 bp = Blueprint('auth', __name__)
+
+def is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and \
+           ref_url.netloc == test_url.netloc
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -18,7 +25,9 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('main.index'))
+            if not next_page or not is_safe_url(next_page):
+                next_page = url_for('main.index')
+            return redirect(next_page)
         else:
             flash('Invalid username or password')
             
