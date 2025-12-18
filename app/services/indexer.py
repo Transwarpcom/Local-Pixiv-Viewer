@@ -2,7 +2,7 @@ import os
 import re
 from datetime import datetime
 from app.extensions import db
-from app.models import Work, Image as ImageModel
+from app.models import Work, Image as ImageModel, Series
 from app.utils import generate_thumbnail
 
 class Indexer:
@@ -54,45 +54,111 @@ class Indexer:
                 work_id = int(match_txt.group(1))
                 self._index_file(work_id, 0, artist_id, artist_name, full_artist_path, filename, 'Novel')
 
+    def _parse_filename(self, filename):
+        base = os.path.splitext(filename)[0]
+
+        series_id = None
+        series_order = None
+        series_title = None
+
+        # Check for series info at the end: _%23{Order}-{SeriesID}
+        series_pattern = re.search(r'_(%23|#)(\d+)-(\d+)$', base)
+
+        if series_pattern:
+            series_order = int(series_pattern.group(2))
+            series_id = int(series_pattern.group(3))
+            base_without_series = base[:series_pattern.start()]
+        else:
+            base_without_series = base
+
+        parts = base_without_series.split('_')
+
+        # Part 0: {ID}-{Title}
+        if len(parts) >= 1:
+            p0 = parts[0]
+            if '-' in p0:
+                pid, title = p0.split('-', 1)
+            else:
+                pid = p0
+                title = p0
+        else:
+            pid = base
+            title = base
+
+        tags = ""
+        # Part 1+: Tags and maybe Series Title
+        if len(parts) > 1:
+            rest = "_".join(parts[1:])
+
+            if series_id:
+                if '-' in rest:
+                    tags, series_title = rest.rsplit('-', 1)
+                else:
+                    tags = rest
+            else:
+                tags = rest
+
+        # Remove trailing p0/p1 if it was part of title/tags due to parsing error
+        # Actually our logic above for Title/Tags might capture _p0 if we don't clean it.
+        # But _pX is usually at the very end.
+        # If we had series info, we removed the end already.
+        # If we didn't have series info, `base` might end with `_p0`.
+
+        return {
+            'id': int(pid) if pid.isdigit() else None,
+            'title': title,
+            'tags': tags,
+            'series_id': series_id,
+            'series_order': series_order,
+            'series_title': series_title
+        }
+
     def _index_file(self, work_id, p_num, artist_id, artist_name, dir_path, filename, work_type):
         work = Work.query.get(work_id)
         
         rel_path = os.path.join(os.path.basename(dir_path), filename)
         full_path = os.path.join(dir_path, filename)
         
+        meta = self._parse_filename(filename)
+
         if not work:
-            # Parse Title/Tags if available in filename
-            # Heuristic: ID_Title_Tags_p0.ext or similar
-            title = f"Work {work_id}"
-            tags = ""
-            
-            base = os.path.splitext(filename)[0]
-            parts = base.split('_')
-            # Check for p_num at end
-            if len(parts) > 1 and parts[-1].startswith('p') and parts[-1][1:].isdigit():
-                parts = parts[:-1]
-                
-            # ID is parts[0]
-            if len(parts) > 1:
-                # Assume parts[1] is title
-                title = parts[1]
-                if len(parts) > 2:
-                    tags = ",".join(parts[2:])
-            
             work = Work(
                 id=work_id,
-                title=title,
-                tags=tags,
+                title=meta['title'],
+                tags=meta['tags'],
                 work_type=work_type,
                 artist_id=artist_id,
                 artist_name=artist_name,
                 created_at=datetime.utcnow()
             )
             db.session.add(work)
+        else:
+            # Update metadata if available and seemingly better
+            # If current title is just ID or default, and new title is longer, update.
+            # Also always update tags if they were empty.
+            if meta['title'] and len(meta['title']) > len(str(work_id)):
+                 work.title = meta['title']
             
+            if meta['tags']:
+                work.tags = meta['tags']
+
+            # Upgrade type to Novel if txt found
+            if work_type == 'Novel':
+                work.work_type = 'Novel'
+
+        # Handle Series
+        if meta['series_id']:
+            series = Series.query.get(meta['series_id'])
+            if not series:
+                series = Series(id=meta['series_id'], title=meta['series_title'])
+                db.session.add(series)
+
+            work.series_id = meta['series_id']
+            work.series_order = meta['series_order']
+
         # Handle Image/File entry
-        # For novels, we treat the txt file as p_num=0 image entry essentially, or just rely on work.file_path
-        if work_type == 'Illustration':
+        if work.work_type == 'Illustration' or (work.work_type == 'Novel' and work_type == 'Illustration'):
+             # Even for Novel, we might want to store illustrations (as inserts or covers)
              img = ImageModel.query.filter_by(work_id=work_id, p_num=p_num).first()
              if not img:
                  img = ImageModel(
@@ -103,19 +169,18 @@ class Indexer:
                  db.session.add(img)
                  
              if p_num == 0:
-                 work.file_path = rel_path
-                 # Generate thumbnail
-                 thumb_rel_path = os.path.join(str(artist_id), f"{work_id}.jpg")
-                 thumb_full_path = os.path.join(self.thumbs_dir, thumb_rel_path)
-                 if generate_thumbnail(full_path, thumb_full_path):
-                     work.cover_path = thumb_rel_path
+                 # If we haven't set a cover yet, or if this is p0, set it.
+                 # For Novel, we might want to prioritize using this as cover if no cover exists.
+                 if not work.cover_path or work.cover_path.startswith('thumbs/'): # Overwrite generated thumb if we have better one?
+                     # Actually we just generate thumb for this image
+                     thumb_rel_path = os.path.join(str(artist_id), f"{work_id}.jpg")
+                     thumb_full_path = os.path.join(self.thumbs_dir, thumb_rel_path)
+                     if generate_thumbnail(full_path, thumb_full_path):
+                         work.cover_path = thumb_rel_path
         
         elif work_type == 'Novel':
             # For novels, set file_path to the text file
-            if not work.file_path:
-                work.file_path = rel_path
-                # Novel thumbnail? Maybe generate a default one or try to find a cover image if Pixiv provides one separately.
-                # Since we don't have a cover image file, we might leave cover_path null or use a placeholder in frontend.
-                pass
+            work.file_path = rel_path
+            # We don't change cover_path here unless we have a logic for novel covers (which we usually don't from txt files)
 
         db.session.commit()

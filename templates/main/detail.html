@@ -4,7 +4,28 @@
 <div class="row">
     <div class="col-md-8">
         <h2>{{ work.title }}</h2>
-        <p class="text-muted">By {{ work.artist_name }} (ID: {{ work.artist_id }}) | Views: {{ work.view_count }} | Type: {{ work.work_type }}</p>
+        <p class="text-muted">
+            By {{ work.artist_name }} (ID: {{ work.artist_id }}) |
+            Views: {{ work.view_count }} |
+            Type: {{ work.work_type }}
+            {% if work.series %}
+            | Series: <a href="{{ url_for('main.series_detail', series_id=work.series.id) }}">{{ work.series.title }}</a>
+            (#{{ work.series_order }})
+            {% endif %}
+        </p>
+
+        {% if work.series %}
+        <div class="btn-group mb-3">
+            {% if previous_in_series %}
+            <a href="{{ url_for('main.detail', work_id=previous_in_series.id) }}" class="btn btn-outline-primary">Previous in Series</a>
+            {% endif %}
+            <a href="{{ url_for('main.series_detail', series_id=work.series.id) }}" class="btn btn-outline-primary">Series Overview</a>
+            {% if next_in_series %}
+            <a href="{{ url_for('main.detail', work_id=next_in_series.id) }}" class="btn btn-outline-primary">Next in Series</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <div class="mb-3">
             {% for tag in (work.tags or '').split(',') %}
             <span class="badge bg-secondary">{{ tag }}</span>

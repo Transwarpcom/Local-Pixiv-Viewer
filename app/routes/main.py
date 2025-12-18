@@ -1,8 +1,8 @@
 import os
 from flask import Blueprint, render_template, request, current_app, send_from_directory, abort, flash
 from flask_login import login_required, current_user
-from sqlalchemy import desc
-from app.models import Work, History, User, work_likes, bookmarks
+from sqlalchemy import desc, asc
+from app.models import Work, History, User, work_likes, bookmarks, Series
 from app.extensions import db
 
 bp = Blueprint('main', __name__)
@@ -15,7 +15,7 @@ def index():
     return render_template('main/index.html', works=works)
 
 @bp.route('/work/<int:work_id>')
-def work_detail(work_id):
+def detail(work_id):
     work = Work.query.get_or_404(work_id)
     
     # Update view count
@@ -45,8 +45,30 @@ def work_detail(work_id):
                 novel_content = f"Error reading file: {e}"
         else:
             novel_content = "File not found."
+
+    previous_in_series = None
+    next_in_series = None
+    if work.series_id:
+        previous_in_series = Work.query.filter(
+            Work.series_id == work.series_id,
+            Work.series_order < work.series_order
+        ).order_by(desc(Work.series_order)).first()
+
+        next_in_series = Work.query.filter(
+            Work.series_id == work.series_id,
+            Work.series_order > work.series_order
+        ).order_by(asc(Work.series_order)).first()
             
-    return render_template('main/detail.html', work=work, novel_content=novel_content)
+    return render_template('main/detail.html', work=work, novel_content=novel_content,
+                           previous_in_series=previous_in_series, next_in_series=next_in_series)
+
+@bp.route('/series/<int:series_id>')
+def series_detail(series_id):
+    series = Series.query.get_or_404(series_id)
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['ITEMS_PER_PAGE']
+    works = series.works.order_by(asc(Work.series_order)).paginate(page=page, per_page=per_page)
+    return render_template('main/series_detail.html', series=series, works=works)
 
 @bp.route('/ranking')
 def ranking():
