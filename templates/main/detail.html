@@ -26,6 +26,25 @@
         </div>
         {% endif %}
 
+        {% if work.images.count() > 1 or 'manga' in (work.tags or '').lower() or '漫画' in (work.tags or '') %}
+        <div class="mb-3">
+            <a href="{{ url_for('main.read_manga', work_id=work.id) }}" class="btn btn-success w-100">
+                <i class="bi bi-book"></i> {{ _('Read in Manga Mode') }}
+            </a>
+        </div>
+        {% endif %}
+
+        {% if current_user.is_authenticated %}
+        <div class="mb-3">
+             <form action="{{ url_for('main.auto_tag', work_id=work.id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+                <button type="submit" class="btn btn-outline-info w-100">
+                    <i class="bi bi-magic"></i> {{ _('Auto Tag (AI)') }}
+                </button>
+             </form>
+        </div>
+        {% endif %}
+
         <div class="mb-3">
             {% for tag in (work.tags or '').split(',') %}
             <a href="{{ url_for('main.search', q=tag.strip()) }}" class="badge bg-secondary text-decoration-none">{{ tag.strip() }}</a>

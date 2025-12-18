@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Gacha') }} - Pixiv Local{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h1 class="mb-4 display-4">Gacha Time!</h1>
+    <p class="lead mb-5">Discover hidden gems or revisit old favorites.</p>
+
+    <div id="gacha-machine" class="mb-5 position-relative" style="height: 400px; display: flex; align-items: center; justify-content: center;">
+        <div id="gacha-animation" style="display: none;">
+            <div class="spinner-border text-primary" style="width: 5rem; height: 5rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Summoning...</p>
+        </div>
+
+        <div id="gacha-result" class="card shadow-lg" style="display: none; width: 300px; transform: scale(0); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+            <div class="card-header bg-warning text-dark fw-bold" id="rarity-badge">SSR</div>
+            <img id="result-img" src="" class="card-img-top" style="height: 300px; object-fit: cover;">
+            <div class="card-body">
+                <h5 class="card-title text-truncate" id="result-title">Title</h5>
+                <a id="result-link" href="#" class="btn btn-primary w-100">View Work</a>
+            </div>
+        </div>
+
+        <button id="pull-btn" class="btn btn-lg btn-primary rounded-pill px-5 py-3 shadow" onclick="pullGacha()">
+            <i class="bi bi-stars"></i> 1x Pull
+        </button>
+    </div>
+</div>
+
+<script>
+function pullGacha() {
+    const btn = document.getElementById('pull-btn');
+    const anim = document.getElementById('gacha-animation');
+    const res = document.getElementById('gacha-result');
+    const resultImg = document.getElementById('result-img');
+    const resultTitle = document.getElementById('result-title');
+    const resultLink = document.getElementById('result-link');
+    const rarityBadge = document.getElementById('rarity-badge');
+
+    // Reset UI
+    btn.style.display = 'none';
+    res.style.display = 'none';
+    res.style.transform = 'scale(0)';
+    anim.style.display = 'block';
+
+    // Fetch random work
+    fetch('{{ url_for("main.gacha_pull") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                location.reload();
+                return;
+            }
+
+            // Artificial delay for tension
+            setTimeout(() => {
+                anim.style.display = 'none';
+                res.style.display = 'block';
+
+                resultImg.src = data.thumb_url;
+                resultTitle.textContent = data.title;
+                resultLink.href = data.url;
+
+                // Rarity logic (just visual flavor based on view count)
+                if (data.view_count > 100) {
+                    rarityBadge.textContent = "UR (Ultra Rare)";
+                    rarityBadge.className = "card-header bg-danger text-white fw-bold";
+                } else if (data.view_count > 20) {
+                    rarityBadge.textContent = "SSR (Super Rare)";
+                    rarityBadge.className = "card-header bg-warning text-dark fw-bold";
+                } else {
+                    rarityBadge.textContent = "R (Rare)";
+                    rarityBadge.className = "card-header bg-info text-white fw-bold";
+                }
+
+                // Animate pop
+                setTimeout(() => {
+                    res.style.transform = 'scale(1)';
+                    btn.textContent = "Pull Again";
+                    btn.style.display = 'inline-block';
+                }, 50);
+
+            }, 1500);
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Gacha machine jammed!");
+            location.reload();
+        });
+}
+</script>
+{% endblock %}

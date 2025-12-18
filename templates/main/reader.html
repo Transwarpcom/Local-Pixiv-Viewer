@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Reading: {{ work.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0 bg-dark min-vh-100 d-flex flex-column align-items-center justify-content-center" style="position: absolute; top: 0; left: 0; z-index: 2000;">
+    <div class="position-absolute top-0 start-0 m-3 z-3">
+        <a href="{{ url_for('main.detail', work_id=work.id) }}" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="position-absolute top-0 end-0 m-3 z-3 text-white">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="doublePageMode" checked>
+            <label class="form-check-label" for="doublePageMode">Double Page</label>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="rtlMode" checked>
+            <label class="form-check-label" for="rtlMode">RTL (Right to Left)</label>
+        </div>
+    </div>
+
+    <div id="reader-container" class="d-flex align-items-center justify-content-center h-100 w-100" style="overflow: hidden;">
+        <!-- Images injected by JS -->
+    </div>
+
+    <div class="position-absolute bottom-0 w-100 p-3 text-center text-white bg-gradient-dark">
+        <button class="btn btn-light rounded-circle mx-2" onclick="prevPage()"><i class="bi bi-chevron-left"></i></button>
+        <span id="page-indicator" class="mx-2">1 / ?</span>
+        <button class="btn btn-light rounded-circle mx-2" onclick="nextPage()"><i class="bi bi-chevron-right"></i></button>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-dark {
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    }
+    .reader-page {
+        max-height: 100vh;
+        max-width: 50vw;
+        object-fit: contain;
+        transition: opacity 0.3s;
+    }
+    .single-page .reader-page {
+        max-width: 100vw;
+    }
+</style>
+
+<script>
+    const images = [
+        {% for image in work.images %}
+        "{{ url_for('main.serve_data', filename=image.file_path) }}",
+        {% endfor %}
+    ];
+
+    let currentIndex = 0;
+    const container = document.getElementById('reader-container');
+    const indicator = document.getElementById('page-indicator');
+    const doublePageToggle = document.getElementById('doublePageMode');
+    const rtlToggle = document.getElementById('rtlMode');
+
+    function render() {
+        container.innerHTML = '';
+        const isDouble = doublePageToggle.checked;
+        const isRTL = rtlToggle.checked;
+
+        container.className = `d-flex align-items-center justify-content-center h-100 w-100 ${isDouble ? '' : 'single-page'}`;
+
+        // Determine indices to show
+        let idx1 = currentIndex;
+        let idx2 = currentIndex + 1;
+
+        // Create IMG elements
+        const img1 = document.createElement('img');
+        img1.src = images[idx1];
+        img1.className = 'reader-page shadow';
+
+        if (isDouble && idx2 < images.length) {
+            const img2 = document.createElement('img');
+            img2.src = images[idx2];
+            img2.className = 'reader-page shadow';
+
+            if (isRTL) {
+                container.appendChild(img2); // Right (2nd page) comes first in DOM for visual Left if Flex is LTR?
+                // Wait, standard RTL manga: Right Page is Page 1, Left Page is Page 2.
+                // In flex row: [Left Element] [Right Element]
+                // We want: [Page 2] [Page 1]
+                container.appendChild(img1);
+            } else {
+                container.appendChild(img1);
+                container.appendChild(img2);
+            }
+            indicator.innerText = `${idx1 + 1}-${idx2 + 1} / ${images.length}`;
+        } else {
+            container.appendChild(img1);
+            indicator.innerText = `${idx1 + 1} / ${images.length}`;
+        }
+    }
+
+    function nextPage() {
+        const step = doublePageToggle.checked ? 2 : 1;
+        const isRTL = rtlToggle.checked;
+
+        // In RTL, "Next" (Left Arrow visually usually, but logically next page) means increment index.
+        // User interface buttons: Left Arrow usually means "Next Page" in RTL context?
+        // Let's stick to logical "Next" -> increment index.
+        if (currentIndex + step < images.length) {
+            currentIndex += step;
+            render();
+        }
+    }
+
+    function prevPage() {
+        const step = doublePageToggle.checked ? 2 : 1;
+        if (currentIndex - step >= 0) {
+            currentIndex -= step;
+            render();
+        }
+    }
+
+    // Key nav
+    document.addEventListener('keydown', (e) => {
+        const isRTL = rtlToggle.checked;
+        if (e.key === 'ArrowLeft') {
+            // Visual Left.
+            // LTR: Prev. RTL: Next.
+            if (isRTL) nextPage(); else prevPage();
+        } else if (e.key === 'ArrowRight') {
+            // Visual Right.
+            // LTR: Next. RTL: Prev.
+            if (isRTL) prevPage(); else nextPage();
+        }
+    });
+
+    doublePageToggle.addEventListener('change', render);
+    rtlToggle.addEventListener('change', render);
+
+    render();
+</script>
+{% endblock %}
