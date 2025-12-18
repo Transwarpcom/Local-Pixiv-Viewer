@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    {% for work in works.items %}
+    <div class="col-6 col-md-4 col-lg-3 mb-4">
+        <div class="card thumb-card h-100">
+            <a href="{{ url_for('main.work_detail', work_id=work.id) }}">
+                {% if work.cover_path %}
+                <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}" class="card-img-top work-thumb {% if 'R-18' in (work.tags or '') %}blur-r18{% endif %}" alt="{{ work.title }}">
+                {% else %}
+                <div class="card-img-top work-thumb bg-secondary d-flex align-items-center justify-content-center text-white">
+                    No Thumb
+                </div>
+                {% endif %}
+            </a>
+            <div class="card-body">
+                <h6 class="card-title text-truncate">{{ work.title }}</h6>
+                <p class="card-text small text-muted">{{ work.artist_name }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+<nav>
+  <ul class="pagination justify-content-center">
+    {% if works.has_prev %}
+    <li class="page-item"><a class="page-link" href="{{ url_for(request.endpoint, page=works.prev_num, q=request.args.get('q')) }}">Previous</a></li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ works.page }}</span></li>
+    {% if works.has_next %}
+    <li class="page-item"><a class="page-link" href="{{ url_for(request.endpoint, page=works.next_num, q=request.args.get('q')) }}">Next</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endblock %}

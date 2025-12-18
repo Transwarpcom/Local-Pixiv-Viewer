@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}History - Pixiv Local{% endblock %}
+
+{% block content %}
+<h3>Viewing History</h3>
+<div class="row">
+    {% for history_item in pagination.items %}
+    {% set work = history_item.work %}
+    <div class="col-6 col-md-4 col-lg-3 mb-4">
+        <div class="card thumb-card h-100">
+            <a href="{{ url_for('main.work_detail', work_id=work.id) }}">
+                {% if work.cover_path %}
+                <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}" class="card-img-top work-thumb" alt="{{ work.title }}">
+                {% else %}
+                <div class="card-img-top work-thumb bg-secondary d-flex align-items-center justify-content-center text-white">
+                    No Thumb
+                </div>
+                {% endif %}
+            </a>
+            <div class="card-body">
+                <h6 class="card-title text-truncate">{{ work.title }}</h6>
+                <small class="text-muted">Viewed: {{ history_item.viewed_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<!-- Pagination code repeated or included -->
+{% endblock %}

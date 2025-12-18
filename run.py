@@ -1,35 +1,46 @@
-from app import create_app, db
-from app.services.indexer import loop, scan_directory
-import threading
-import sys
 import os
-import config
+import threading
+import time
+import sys
+from app import create_app, db
+from app.services.indexer import Indexer
+from app.models import User
 
 app = create_app()
 
+def run_indexer():
+    # Loop needs to be outside app context to allow refreshing context/session
+    while True:
+        try:
+            with app.app_context():
+                print("Starting index cycle...")
+                indexer = Indexer(app.config)
+                indexer.run()
+                print("Index cycle complete.")
+        except Exception as e:
+            print(f"Indexer error: {e}")
+        
+        time.sleep(app.config['SCAN_INTERVAL'])
+
+@app.cli.command("init_db")
+def init_db_command():
+    init_db()
+
 def init_db():
-    with app.app_context():
-        db.create_all()
-        # Add indexes if not created by SQLAlchemy (SQLAlchemy does create indexes defined in models)
-        # But auto_indexer.py had manual index creation.
-        # SQLAlchemy models defined index=True, so it should be fine.
+    db.create_all()
+    print("Database initialized.")
 
 if __name__ == '__main__':
+    # Handle init_db command specifically to match user instructions
     if len(sys.argv) > 1 and sys.argv[1] == 'init_db':
-        init_db()
-        print("Database initialized.")
+        with app.app_context():
+            init_db()
         sys.exit(0)
 
-    # Ensure DB exists
-    if not os.path.exists(config.DB_PATH):
-        init_db()
-    else:
-        # Also ensure tables exist even if file exists
-        init_db()
-
-    # Start indexer in background
-    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true': # Prevent double run in reload mode
-        t = threading.Thread(target=loop, args=(app,), daemon=True)
-        t.start()
-
-    app.run(host='0.0.0.0', port=5000)
+    # Start indexer thread
+    if not os.environ.get("WERKZEUG_RUN_MAIN") == "true": 
+        # Only start in the main process, not the reloader
+        indexer_thread = threading.Thread(target=run_indexer, daemon=True)
+        indexer_thread.start()
+    
+    app.run(host='0.0.0.0', port=8362, debug=True)

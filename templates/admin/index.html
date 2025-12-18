@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h2>Admin Dashboard</h2>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <h4>Users</h4>
+        <table class="table">
+            <thead>
+                <tr><th>ID</th><th>Username</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }} {% if user.is_admin %}(Admin){% endif %}</td>
+                    <td>
+                        {% if not user.is_admin %}
+                        <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" onsubmit="return confirm('Delete user?');">
+                            <button class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="col-md-6">
+        <h4>Recent Comments</h4>
+        <table class="table">
+            <thead>
+                <tr><th>User</th><th>Content</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                {% for comment in comments %}
+                <tr>
+                    <td>{{ comment.author.username }}</td>
+                    <td>{{ comment.content[:50] }}...</td>
+                    <td>
+                        <form action="{{ url_for('admin.delete_comment', comment_id=comment.id) }}" method="post" onsubmit="return confirm('Delete comment?');">
+                            <button class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

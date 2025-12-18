@@ -1,18 +1,27 @@
-from urllib.parse import quote
-import config
+import os
+from PIL import Image
+import urllib.parse
 
-def register_filters(app):
-    @app.template_filter('url_quote')
-    def url_quote_filter(s):
-        return quote(s, safe='/') if s else ""
+def generate_thumbnail(source_path, dest_path, size=(360, 360)):
+    """Generates a JPEG thumbnail."""
+    try:
+        if not os.path.exists(source_path):
+            return False
+            
+        # Ensure destination directory exists
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        
+        with Image.open(source_path) as img:
+            # Convert to RGB if necessary (e.g. PNG with alpha)
+            if img.mode in ('RGBA', 'P'):
+                img = img.convert('RGB')
+                
+            img.thumbnail(size)
+            img.save(dest_path, "JPEG", quality=85)
+        return True
+    except Exception as e:
+        print(f"Error generating thumbnail for {source_path}: {e}")
+        return False
 
-    @app.template_filter('thumbnail')
-    def thumbnail_filter(s):
-        if not s: return ""
-        if config.THUMBS_DIR:
-            return f"{config.THUMBS_URL_PREFIX}{quote(s, safe='/')}.jpg"
-        return f"{config.THUMBS_URL_PREFIX}{quote(s, safe='/')}"
-
-    @app.template_filter('is_r18')
-    def is_r18_filter(tags):
-        return tags and ('R-18' in tags or 'R-18G' in tags)
+def url_quote(s):
+    return urllib.parse.quote(s)

@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>{{ work.title }}</h2>
+        <p class="text-muted">By {{ work.artist_name }} (ID: {{ work.artist_id }}) | Views: {{ work.view_count }} | Type: {{ work.work_type }}</p>
+        <div class="mb-3">
+            {% for tag in (work.tags or '').split(',') %}
+            <span class="badge bg-secondary">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        
+        {% if work.work_type == 'Novel' %}
+            <div class="card bg-light">
+                <div class="card-body" style="white-space: pre-wrap; font-family: serif; line-height: 1.8;">
+                    {{ novel_content or 'No content.' }}
+                </div>
+            </div>
+        {% else %}
+            <div class="work-images">
+                {% for image in work.images %}
+                <img src="{{ url_for('main.serve_data', filename=image.file_path) }}" class="img-fluid mb-3 d-block mx-auto" alt="Page {{ image.p_num }}">
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-body">
+                {% if current_user.is_authenticated %}
+                <button id="like-btn" class="btn btn-outline-danger w-100 mb-2" onclick="toggleLike()">
+                    <i class="bi bi-heart{% if current_user.liked_works.filter_by(id=work.id).first() %}foo{% endif %}"></i> 
+                    <span id="like-text">{% if current_user.liked_works.filter_by(id=work.id).first() %}Liked{% else %}Like{% endif %}</span>
+                </button>
+                <button id="bookmark-btn" class="btn btn-outline-warning w-100 mb-2" onclick="toggleBookmark()">
+                    <i class="bi bi-bookmark"></i> 
+                    <span id="bookmark-text">{% if current_user.bookmarked_works.filter_by(id=work.id).first() %}Bookmarked{% else %}Bookmark{% endif %}</span>
+                </button>
+                {% else %}
+                <p>Login to interact</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Comments</div>
+            <div class="card-body">
+                <div id="comments-list" class="mb-3">
+                    {% for comment in work.comments %}
+                    <div class="mb-2 border-bottom pb-1">
+                        <strong>{{ comment.author.username }}</strong>: {{ comment.content }}
+                        <div class="text-muted small">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if current_user.is_authenticated %}
+                <div class="input-group">
+                    <input type="text" id="comment-input" class="form-control" placeholder="Add a comment...">
+                    <button class="btn btn-primary" onclick="postComment()">Post</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+{% if current_user.is_authenticated %}
+function toggleLike() {
+    fetch('{{ url_for("api.like_work", work_id=work.id) }}', {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+        const btn = document.getElementById('like-btn');
+        const txt = document.getElementById('like-text');
+        if(data.liked) {
+            btn.classList.remove('btn-outline-danger');
+            btn.classList.add('btn-danger');
+            txt.innerText = 'Liked';
+        } else {
+            btn.classList.add('btn-outline-danger');
+            btn.classList.remove('btn-danger');
+            txt.innerText = 'Like';
+        }
+    });
+}
+
+function toggleBookmark() {
+    fetch('{{ url_for("api.bookmark_work", work_id=work.id) }}', {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+        const btn = document.getElementById('bookmark-btn');
+        const txt = document.getElementById('bookmark-text');
+        if(data.bookmarked) {
+            btn.classList.remove('btn-outline-warning');
+            btn.classList.add('btn-warning');
+            txt.innerText = 'Bookmarked';
+        } else {
+            btn.classList.add('btn-outline-warning');
+            btn.classList.remove('btn-warning');
+            txt.innerText = 'Bookmark';
+        }
+    });
+}
+
+function postComment() {
+    const content = document.getElementById('comment-input').value;
+    if(!content) return;
+    
+    fetch('{{ url_for("api.post_comment", work_id=work.id) }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({content: content})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.error) alert(data.error);
+        else {
+            const list = document.getElementById('comments-list');
+            const div = document.createElement('div');
+            div.className = 'mb-2 border-bottom pb-1';
+            div.innerHTML = `<strong>${data.user}</strong>: ${data.content}<div class="text-muted small">${data.created_at}</div>`;
+            list.appendChild(div);
+            document.getElementById('comment-input').value = '';
+        }
+    });
+}
+{% endif %}
+</script>
+{% endblock %}
