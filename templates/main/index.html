@@ -9,7 +9,7 @@
                 {% if work.cover_path %}
                 <!-- Performance: Add lazy loading and async decoding for off-screen images -->
                 <img src="{{ url_for('main.serve_thumbs', filename=work.cover_path) }}"
-                     class="card-img-top work-thumb {% if 'R-18' in (work.tags or '') %}blur-r18{% endif %}"
+                     class="card-img-top work-thumb {% if 'R-18' in (work.tags or '') or 'R-18G' in (work.tags or '') %}blur-r18{% endif %}"
                      alt="{{ work.title }}"
                      loading="lazy"
                      decoding="async">

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Settings') }} - Pixiv Local{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">{{ _('Settings') }}</div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+                    <div class="mb-3">
+                        <label class="form-label">{{ _('Recommendation Mode') }}</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="recommendation_mode" id="modeTags" value="tags" {% if current_user.recommendation_mode == 'tags' %}checked{% endif %}>
+                            <label class="form-check-label" for="modeTags">
+                                {{ _('Based on Tags') }}
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="recommendation_mode" id="modeSimilarity" value="similarity" {% if current_user.recommendation_mode == 'similarity' %}checked{% endif %}>
+                            <label class="form-check-label" for="modeSimilarity">
+                                {{ _('Based on Image Similarity') }}
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">{{ _('Save Settings') }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -129,6 +129,9 @@
             <button class="btn" type="submit" aria-label="{{ _('Search') }}">
               <i class="bi bi-search"></i>
             </button>
+            <button class="btn" type="button" aria-label="Image Search" data-bs-toggle="modal" data-bs-target="#imageSearchModal">
+              <i class="bi bi-camera"></i>
+            </button>
           </form>
           <ul class="navbar-nav">
             <li class="nav-item dropdown">
@@ -180,6 +183,28 @@
       {% endwith %}
       
       {% block content %}{% endblock %}
+    </div>
+
+    <!-- Image Search Modal -->
+    <div class="modal fade" id="imageSearchModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Image Search</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form action="{{ url_for('main.search_image') }}" method="post" enctype="multipart/form-data">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+              <div class="mb-3">
+                <label for="imageInput" class="form-label">Upload Image</label>
+                <input class="form-control" type="file" id="imageInput" name="file" accept="image/*" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Search</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

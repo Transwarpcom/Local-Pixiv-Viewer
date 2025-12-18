@@ -63,7 +63,7 @@
                     <div class="card h-100">
                         <a href="{{ url_for('main.detail', work_id=r_work.id) }}">
                             {% if r_work.cover_path %}
-                                <img src="{{ thumbnail_url(r_work.cover_path) }}" class="card-img-top" alt="{{ r_work.title }}" loading="lazy">
+                                <img src="{{ thumbnail_url(r_work.cover_path) }}" class="card-img-top {% if 'R-18' in (r_work.tags or '') or 'R-18G' in (r_work.tags or '') %}blur-r18{% endif %}" alt="{{ r_work.title }}" loading="lazy">
                             {% else %}
                                 <div class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
                                     No Cover
