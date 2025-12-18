@@ -71,6 +71,9 @@ class Indexer:
         else:
             base_without_series = base
 
+        if base_without_series.endswith("-_-"):
+            base_without_series = base_without_series[:-3]
+
         parts = base_without_series.split('_')
 
         # Part 0: {ID}-{Title}
