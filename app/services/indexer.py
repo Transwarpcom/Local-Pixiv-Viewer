@@ -76,39 +76,57 @@ class Indexer:
 
         parts = base_without_series.split('_')
 
-        # Part 0: {ID}-{Title}
+        # Part 0: usually just ID or ID-Title
+        pid = None
+        title = None
+
+        # Initial parsing of first part
         if len(parts) >= 1:
             p0 = parts[0]
             if '-' in p0:
-                pid, title = p0.split('-', 1)
+                pid_str, title_str = p0.split('-', 1)
+                pid = pid_str
+                title = title_str
             else:
                 pid = p0
-                title = p0
+                title = p0 # Default title to ID
         else:
             pid = base
             title = base
 
         tags = ""
-        # Part 1+: Tags and maybe Series Title
-        if len(parts) > 1:
-            rest = "_".join(parts[1:])
+        tags_parts = []
 
-            if series_id:
-                if '-' in rest:
-                    tags, series_title = rest.rsplit('-', 1)
+        # Part 1+: Tags, or p{Page}-{Title}, or just tags
+        if len(parts) > 1:
+            # Check if parts[1] is p{Page}-{Title}
+            # Pattern: p\d+-.*
+            p_pattern = re.match(r'^p(\d+)-(.*)$', parts[1])
+            if p_pattern and pid == p0: # Only if pid was cleanly extracted from p0
+                # If we found p{Page}-{Title}, use the title from here
+                # And assume subsequent parts are tags
+                # And we override the default title=pid
+                title = p_pattern.group(2)
+                tags_parts = parts[2:]
+            else:
+                # Standard case
+                tags_parts = parts[1:]
+
+            # Reconstruct tags
+            if tags_parts:
+                rest = "_".join(tags_parts)
+
+                # If series_id is present, series title might be at end of tags
+                if series_id:
+                    if '-' in rest:
+                        tags, series_title = rest.rsplit('-', 1)
+                    else:
+                        tags = rest
                 else:
                     tags = rest
-            else:
-                tags = rest
-
-        # Remove trailing p0/p1 if it was part of title/tags due to parsing error
-        # Actually our logic above for Title/Tags might capture _p0 if we don't clean it.
-        # But _pX is usually at the very end.
-        # If we had series info, we removed the end already.
-        # If we didn't have series info, `base` might end with `_p0`.
 
         return {
-            'id': int(pid) if pid.isdigit() else None,
+            'id': int(pid) if pid and pid.isdigit() else None,
             'title': title,
             'tags': tags,
             'series_id': series_id,
