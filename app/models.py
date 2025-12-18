@@ -28,6 +28,8 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     recommendation_mode = db.Column(db.String(20), default='tags') # 'tags' or 'similarity'
+    image_quality = db.Column(db.String(20), default='original') # 'original', 'compressed'
+    enable_r18_blur = db.Column(db.Boolean, default=True)
 
     # Relationships
     comments = db.relationship('Comment', backref='author', lazy='dynamic')

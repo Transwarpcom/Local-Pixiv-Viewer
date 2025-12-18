@@ -19,24 +19,25 @@ def gacha():
 
 @bp.route('/gacha/pull')
 def gacha_pull():
-    # Fetch a random work
-    # SQLite optimization for random row:
-    # work = Work.query.order_by(func.random()).first()
-    # But func.random() can be slow on large tables.
-    # However, this is "Pixiv Local", likely < 100k works. Acceptable.
+    count = request.args.get('count', 1, type=int)
+    if count > 10: count = 10
 
-    work = Work.query.order_by(func.random()).first()
+    works = Work.query.order_by(func.random()).limit(count).all()
 
-    if not work:
+    if not works:
         return {'error': 'No works found in database.'}, 404
 
-    return {
-        'id': work.id,
-        'title': work.title,
-        'url': url_for('main.detail', work_id=work.id),
-        'thumb_url': url_for('main.serve_thumbs', filename=work.cover_path) if work.cover_path else '',
-        'view_count': work.view_count
-    }
+    results = []
+    for work in works:
+        results.append({
+            'id': work.id,
+            'title': work.title,
+            'url': url_for('main.detail', work_id=work.id),
+            'thumb_url': url_for('main.serve_thumbs', filename=work.cover_path) if work.cover_path else '',
+            'view_count': work.view_count
+        })
+
+    return {'results': results}
 
 @bp.route('/slideshow')
 def slideshow():
@@ -74,11 +75,22 @@ def slideshow_data():
 @login_required
 def settings():
     if request.method == 'POST':
+        # Recommendation Mode
         mode = request.form.get('recommendation_mode')
         if mode in ['tags', 'similarity']:
             current_user.recommendation_mode = mode
-            db.session.commit()
-            flash('Settings updated.', 'success')
+
+        # Image Quality
+        quality = request.form.get('image_quality')
+        if quality in ['original', 'compressed']:
+            current_user.image_quality = quality
+
+        # R-18 Blur
+        blur = request.form.get('enable_r18_blur')
+        current_user.enable_r18_blur = True if blur == 'on' else False
+
+        db.session.commit()
+        flash('Settings updated.', 'success')
         return redirect(url_for('main.settings'))
     return render_template('main/settings.html')
 
@@ -387,6 +399,56 @@ def serve_data(filename):
 @bp.route('/thumbs/<path:filename>')
 def serve_thumbs(filename):
     return send_from_directory(current_app.config['THUMBS_DIR'], filename)
+
+@bp.route('/preview/<path:filename>')
+def serve_preview(filename):
+    """
+    Serve a resized version (max 1600px) of the image.
+    Cache it in THUMBS_DIR/previews.
+    """
+    data_dir = current_app.config['DATA_DIR']
+    thumbs_dir = current_app.config['THUMBS_DIR']
+    preview_dir = os.path.join(thumbs_dir, 'previews')
+
+    # Target preview path
+    # Preserve directory structure or flatten? Flattening is risky for collisions.
+    # Replicating structure is safer.
+    rel_path = filename
+    original_path = os.path.join(data_dir, rel_path)
+    preview_path = os.path.join(preview_dir, rel_path)
+
+    if not os.path.exists(original_path):
+        abort(404)
+
+    if not os.path.exists(preview_path):
+        try:
+            os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+            with PILImage.open(original_path) as img:
+                # If animated (GIF/WebP), just copy original or skip resize to avoid breaking animation
+                # Check for is_animated attribute
+                if getattr(img, 'is_animated', False):
+                    # We could copy the file, or just serve original.
+                    # Serving original is simpler and avoids huge duplication if GIF is big.
+                    # But the route expects to serve from preview_dir.
+                    # Let's symlink or copy? Or just abort and serve original.
+                    # Aborting here allows the exception handler or explicit check to serve original.
+                    return send_from_directory(data_dir, filename)
+
+                # Convert to RGB if needed
+                if img.mode in ('RGBA', 'P'):
+                    img = img.convert('RGB')
+
+                # Resize if larger than 1600
+                max_size = (1600, 1600)
+                img.thumbnail(max_size, PILImage.Resampling.LANCZOS)
+
+                img.save(preview_path, 'JPEG', quality=85)
+        except Exception as e:
+            # Fallback to original if processing fails (e.g. weird format)
+            print(f"Preview generation failed: {e}")
+            return send_from_directory(data_dir, filename)
+
+    return send_from_directory(preview_dir, rel_path)
 
 @bp.route('/set_language/<lang_code>')
 def set_language(lang_code):
