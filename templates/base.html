@@ -7,11 +7,66 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
+      body {
+        background-color: #f2f4f5; /* Pixiv light gray background */
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      }
+      .navbar {
+        background-color: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+      }
+      .navbar-brand {
+        color: #0096fa !important; /* Pixiv Blue */
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+      .nav-link {
+        color: #5c5c5c !important;
+        font-weight: 600;
+        font-size: 0.95rem;
+        padding: 0.5rem 1rem !important;
+        transition: color 0.2s;
+      }
+      .nav-link:hover {
+        color: #0096fa !important;
+      }
+      .nav-link i {
+        font-size: 1.1rem;
+        vertical-align: -2px;
+        margin-right: 4px;
+      }
+      .search-form .form-control {
+        border-radius: 20px 0 0 20px;
+        background-color: #f2f4f5;
+        border: none;
+        padding-left: 1rem;
+      }
+      .search-form .form-control:focus {
+        background-color: #fff;
+        box-shadow: 0 0 0 2px rgba(0,150,250,0.2);
+      }
+      .search-form .btn {
+        border-radius: 0 20px 20px 0;
+        background-color: #f2f4f5;
+        border: none;
+        color: #5c5c5c;
+      }
+      .search-form .btn:hover {
+        background-color: #e2e4e5;
+        color: #333;
+      }
       .thumb-card {
-        transition: transform 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: none;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
       }
       .thumb-card:hover {
-        transform: scale(1.05);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       }
       .work-thumb {
         width: 100%;
@@ -28,9 +83,9 @@
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
       <div class="container">
-        <a class="navbar-brand" href="{{ url_for('main.index') }}">Pixiv Local</a>
+        <a class="navbar-brand" href="{{ url_for('main.index') }}">pixiv local</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -38,12 +93,12 @@
           <ul class="navbar-nav me-auto">
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('main.index') }}">
-                <i class="bi bi-house-door"></i> {{ _('Home') }}
+                <i class="bi bi-house-door-fill"></i> {{ _('Home') }}
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('main.ranking') }}">
-                <i class="bi bi-bar-chart"></i> {{ _('Ranking') }}
+                <i class="bi bi-trophy-fill"></i> {{ _('Ranking') }}
               </a>
             </li>
             {% if current_user.is_authenticated %}
@@ -54,9 +109,9 @@
             </li>
             {% endif %}
           </ul>
-          <form class="d-flex me-3" action="{{ url_for('main.search') }}">
-            <input class="form-control me-2" type="search" name="q" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}" value="{{ request.args.get('q', '') }}">
-            <button class="btn btn-outline-light" type="submit" aria-label="{{ _('Search') }}">
+          <form class="d-flex me-3 search-form" action="{{ url_for('main.search') }}">
+            <input class="form-control" type="search" name="q" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}" value="{{ request.args.get('q', '') }}">
+            <button class="btn" type="submit" aria-label="{{ _('Search') }}">
               <i class="bi bi-search"></i>
             </button>
           </form>
@@ -100,7 +155,7 @@
       </div>
     </nav>
     
-    <div class="container mt-4">
+    <div class="container" style="margin-top: 80px;">
       {% with messages = get_flashed_messages() %}
         {% if messages %}
           {% for message in messages %}
