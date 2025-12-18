@@ -5,6 +5,7 @@ import sys
 from app import create_app, db
 from app.services.indexer import Indexer
 from app.models import User
+from app.migration import update_schema
 
 app = create_app()
 
@@ -22,21 +23,16 @@ def run_indexer():
         
         time.sleep(app.config['SCAN_INTERVAL'])
 
-@app.cli.command("init_db")
-def init_db_command():
-    init_db()
-
-def init_db():
-    db.create_all()
-    print("Database initialized.")
+# Auto-migrate on startup
+if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
+    # Run migration only once (in main process if prod, or in reloader child if debug)
+    # Actually, simplest is to just run it. Idempotency protects us.
+    try:
+        update_schema(app, db)
+    except Exception as e:
+        print(f"Migration error: {e}")
 
 if __name__ == '__main__':
-    # Handle init_db command specifically to match user instructions
-    if len(sys.argv) > 1 and sys.argv[1] == 'init_db':
-        with app.app_context():
-            init_db()
-        sys.exit(0)
-
     # Start indexer thread
     if not os.environ.get("WERKZEUG_RUN_MAIN") == "true": 
         # Only start in the main process, not the reloader
