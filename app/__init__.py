@@ -2,7 +2,6 @@ import os
 from flask import Flask, current_app, request, session
 from app.extensions import db, login_manager, babel
 from config import Config
-from app.utils.csrf import generate_csrf_token, validate_csrf_token
 
 def get_locale():
     # Check if user has explicitly set a language
@@ -46,13 +45,6 @@ def create_app(config_class=Config):
         def thumbnail_url(path):
             # Just a placeholder, actual implementation will serve files
             return f"/static/thumbs/{path}"
-        return dict(thumbnail_url=thumbnail_url, csrf_token=generate_csrf_token)
-
-    # Register CSRF protection
-    @app.before_request
-    def check_csrf():
-        # Exclude static files or specific routes if needed
-        if not request.path.startswith('/static'):
-            validate_csrf_token()
+        return dict(thumbnail_url=thumbnail_url)
 
     return app

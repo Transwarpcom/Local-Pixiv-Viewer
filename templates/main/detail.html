@@ -95,12 +95,7 @@
 <script>
 {% if current_user.is_authenticated %}
 function toggleLike() {
-    fetch('{{ url_for("api.like_work", work_id=work.id) }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token() }}'
-        }
-    })
+    fetch('{{ url_for("api.like_work", work_id=work.id) }}', {method: 'POST'})
     .then(r => r.json())
     .then(data => {
         const btn = document.getElementById('like-btn');
@@ -118,12 +113,7 @@ function toggleLike() {
 }
 
 function toggleBookmark() {
-    fetch('{{ url_for("api.bookmark_work", work_id=work.id) }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token() }}'
-        }
-    })
+    fetch('{{ url_for("api.bookmark_work", work_id=work.id) }}', {method: 'POST'})
     .then(r => r.json())
     .then(data => {
         const btn = document.getElementById('bookmark-btn');
@@ -146,10 +136,7 @@ function postComment() {
     
     fetch('{{ url_for("api.post_comment", work_id=work.id) }}', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() }}'
-        },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({content: content})
     })
     .then(r => r.json())
