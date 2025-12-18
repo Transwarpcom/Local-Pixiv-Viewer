@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-12-18 10:46+0000\n"
+"POT-Creation-Date: 2025-12-18 11:07+0000\n"
 "PO-Revision-Date: 2025-12-18 08:39+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -34,24 +34,36 @@ msgstr ""
 msgid "XP Dashboard"
 msgstr ""
 
-#: templates/base.html:118 templates/base.html:119
+#: templates/base.html:117
+msgid "Likes"
+msgstr ""
+
+#: templates/base.html:122
+msgid "Bookmarks"
+msgstr ""
+
+#: templates/base.html:128 templates/base.html:129
 msgid "Search"
 msgstr ""
 
-#: templates/base.html:137
+#: templates/base.html:147
 msgid "Admin"
 msgstr ""
 
-#: templates/base.html:143
+#: templates/base.html:153
 msgid "Logout"
 msgstr ""
 
-#: templates/base.html:149
+#: templates/base.html:159
 msgid "Login"
 msgstr ""
 
-#: templates/base.html:154
+#: templates/base.html:164
 msgid "Register"
+msgstr ""
+
+#: templates/main/bookmarks.html:4
+msgid "Bookmarked Works"
 msgstr ""
 
 #: templates/main/detail.html:8
@@ -84,4 +96,8 @@ msgstr ""
 
 #: templates/main/detail.html:59
 msgid "Related Works"
+msgstr ""
+
+#: templates/main/likes.html:4
+msgid "Liked Works"
 msgstr ""

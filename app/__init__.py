@@ -43,8 +43,7 @@ def create_app(config_class=Config):
     @app.context_processor
     def utility_processor():
         def thumbnail_url(path):
-            # Just a placeholder, actual implementation will serve files
-            return f"/static/thumbs/{path}"
+            return f"/thumbs/{path}"
         return dict(thumbnail_url=thumbnail_url)
 
     return app

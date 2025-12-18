@@ -143,6 +143,24 @@ def xp_dashboard():
                            history_tag_counts=history_tag_counts,
                            liked_tag_counts=liked_tag_counts)
 
+@bp.route('/likes')
+@login_required
+def likes():
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['ITEMS_PER_PAGE']
+    # liked_works is a dynamic relationship query
+    works = current_user.liked_works.paginate(page=page, per_page=per_page)
+    return render_template('main/likes.html', works=works)
+
+@bp.route('/bookmarks')
+@login_required
+def bookmarks():
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['ITEMS_PER_PAGE']
+    # bookmarked_works is a dynamic relationship query
+    works = current_user.bookmarked_works.paginate(page=page, per_page=per_page)
+    return render_template('main/bookmarks.html', works=works)
+
 @bp.route('/data/<path:filename>')
 def serve_data(filename):
     return send_from_directory(current_app.config['DATA_DIR'], filename)
