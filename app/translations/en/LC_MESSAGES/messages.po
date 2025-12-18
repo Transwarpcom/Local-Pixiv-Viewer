@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-12-18 11:07+0000\n"
+"POT-Creation-Date: 2025-12-18 14:08+0000\n"
 "PO-Revision-Date: 2025-12-18 08:39+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -30,7 +30,7 @@ msgstr ""
 msgid "History"
 msgstr ""
 
-#: templates/base.html:112
+#: templates/base.html:112 templates/main/xp_dashboard.html:6
 msgid "XP Dashboard"
 msgstr ""
 
@@ -42,24 +42,49 @@ msgstr ""
 msgid "Bookmarks"
 msgstr ""
 
-#: templates/base.html:128 templates/base.html:129
+#: templates/base.html:127
+msgid "More"
+msgstr ""
+
+#: templates/base.html:130 templates/main/gacha.html:2
+msgid "Gacha"
+msgstr ""
+
+#: templates/base.html:131 templates/main/slideshow.html:6
+msgid "Zen Mode"
+msgstr ""
+
+#: templates/base.html:137 templates/base.html:138 templates/base.html:217
 msgid "Search"
 msgstr ""
 
-#: templates/base.html:147
-msgid "Admin"
-msgstr ""
-
-#: templates/base.html:153
-msgid "Logout"
+#: templates/base.html:141 templates/base.html:207
+msgid "Image Search"
 msgstr ""
 
 #: templates/base.html:159
+msgid "Admin"
+msgstr ""
+
+#: templates/base.html:165 templates/main/detail.html:57
+#: templates/main/settings.html:2 templates/main/settings.html:8
+msgid "Settings"
+msgstr ""
+
+#: templates/base.html:170
+msgid "Logout"
+msgstr ""
+
+#: templates/base.html:176
 msgid "Login"
 msgstr ""
 
-#: templates/base.html:164
+#: templates/base.html:181
 msgid "Register"
+msgstr ""
+
+#: templates/base.html:214
+msgid "Upload Image"
 msgstr ""
 
 #: templates/main/bookmarks.html:4
@@ -94,10 +119,174 @@ msgstr ""
 msgid "Next in Series"
 msgstr ""
 
-#: templates/main/detail.html:59
+#: templates/main/detail.html:32
+msgid "Read in Manga Mode"
+msgstr ""
+
+#: templates/main/detail.html:42
+msgid "Auto Tag (AI)"
+msgstr ""
+
+#: templates/main/detail.html:74
+msgid "Light"
+msgstr ""
+
+#: templates/main/detail.html:75
+msgid "Sepia"
+msgstr ""
+
+#: templates/main/detail.html:76
+msgid "Dark"
+msgstr ""
+
+#: templates/main/detail.html:143
 msgid "Related Works"
+msgstr ""
+
+#: templates/main/gacha.html:6
+msgid "Gacha Time!"
+msgstr ""
+
+#: templates/main/gacha.html:7
+msgid "Discover hidden gems or revisit old favorites."
+msgstr ""
+
+#: templates/main/gacha.html:12 templates/main/slideshow.html:38
+msgid "Loading..."
+msgstr ""
+
+#: templates/main/gacha.html:14
+msgid "Summoning..."
+msgstr ""
+
+#: templates/main/gacha.html:23
+msgid "1x Pull"
+msgstr ""
+
+#: templates/main/gacha.html:26
+msgid "10x Pull"
+msgstr ""
+
+#: templates/main/gacha.html:82
+msgid "UR"
+msgstr ""
+
+#: templates/main/gacha.html:85
+msgid "SSR"
+msgstr ""
+
+#: templates/main/gacha.html:88
+msgid "R"
 msgstr ""
 
 #: templates/main/likes.html:4
 msgid "Liked Works"
+msgstr ""
+
+#: templates/main/reader.html:2
+msgid "Reading"
+msgstr ""
+
+#: templates/main/reader.html:7
+msgid "Back"
+msgstr ""
+
+#: templates/main/reader.html:13
+msgid "Double Page"
+msgstr ""
+
+#: templates/main/reader.html:17
+msgid "RTL (Right to Left)"
+msgstr ""
+
+#: templates/main/settings.html:13
+msgid "Recommendation Mode"
+msgstr ""
+
+#: templates/main/settings.html:17
+msgid "Based on Tags"
+msgstr ""
+
+#: templates/main/settings.html:23
+msgid "Based on Image Similarity"
+msgstr ""
+
+#: templates/main/settings.html:29
+msgid "Image Quality"
+msgstr ""
+
+#: templates/main/settings.html:33
+msgid "Original Quality"
+msgstr ""
+
+#: templates/main/settings.html:39
+msgid "Compressed (Faster)"
+msgstr ""
+
+#: templates/main/settings.html:47
+msgid "Blur R-18/R-18G Thumbnails"
+msgstr ""
+
+#: templates/main/settings.html:51
+msgid "Save Settings"
+msgstr ""
+
+#: templates/main/slideshow.html:39
+msgid "Artist"
+msgstr ""
+
+#: templates/main/slideshow.html:47
+msgid "Exit Zen Mode"
+msgstr ""
+
+#: templates/main/slideshow.html:55
+msgid "Slideshow Settings"
+msgstr ""
+
+#: templates/main/slideshow.html:60
+msgid "Interval (seconds)"
+msgstr ""
+
+#: templates/main/slideshow.html:66
+msgid "Close"
+msgstr ""
+
+#: templates/main/slideshow.html:109
+msgid "No works found."
+msgstr ""
+
+#: templates/main/xp_dashboard.html:7
+msgid "Analyze your preferences (XP) based on viewing history and likes."
+msgstr ""
+
+#: templates/main/xp_dashboard.html:13
+msgid "Top Artists (History)"
+msgstr ""
+
+#: templates/main/xp_dashboard.html:21
+msgid "Activity Heatmap (Hour of Day)"
+msgstr ""
+
+#: templates/main/xp_dashboard.html:32
+msgid "Tag Word Cloud (Liked)"
+msgstr ""
+
+#: templates/main/xp_dashboard.html:52
+msgid "Top Tags (History)"
+msgstr ""
+
+#: templates/main/xp_dashboard.html:60 templates/main/xp_dashboard.html:94
+msgid "Tag"
+msgstr ""
+
+#: templates/main/xp_dashboard.html:61 templates/main/xp_dashboard.html:95
+msgid "Count"
+msgstr ""
+
+#: templates/main/xp_dashboard.html:86
+msgid "Top Tags (Liked)"
+msgstr ""
+
+#: templates/main/xp_dashboard.html:149
+msgid "Views per Hour"
 msgstr ""

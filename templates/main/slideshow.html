@@ -3,46 +3,110 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Zen Mode - Slideshow</title>
+    <title>{{ _('Zen Mode') }} - Slideshow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
         body { margin: 0; background: #000; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; }
         #slide-img { max-height: 100vh; max-width: 100vw; object-fit: contain; transition: opacity 1s ease-in-out; opacity: 0; }
-        #controls { position: absolute; bottom: 20px; right: 20px; color: rgba(255,255,255,0.5); font-family: sans-serif; cursor: pointer; z-index: 10; opacity: 0; transition: opacity 0.3s; }
-        body:hover #controls { opacity: 1; }
-        #meta { position: absolute; bottom: 20px; left: 20px; color: white; font-family: sans-serif; text-shadow: 1px 1px 2px black; opacity: 0; transition: opacity 0.3s; }
-        body:hover #meta { opacity: 1; }
+
+        /* UI Overlay */
+        .ui-layer { opacity: 0; transition: opacity 0.3s; }
+        body:hover .ui-layer { opacity: 1; }
+
+        #controls-bottom { position: absolute; bottom: 20px; right: 20px; color: rgba(255,255,255,0.7); font-family: sans-serif; cursor: pointer; z-index: 10; }
+        #settings-btn { position: absolute; top: 20px; right: 20px; z-index: 20; color: rgba(255,255,255,0.5); font-size: 1.5rem; cursor: pointer; }
+        #settings-btn:hover { color: white; }
+
+        #meta { position: absolute; bottom: 20px; left: 20px; color: white; font-family: sans-serif; text-shadow: 1px 1px 2px black; z-index: 10; pointer-events: none; }
+
         .visible { opacity: 1 !important; }
+
+        /* Settings Modal styling override for dark theme look */
+        .modal-content.dark-glass {
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
     </style>
 </head>
 <body>
     <img id="slide-img" src="">
 
-    <div id="meta">
-        <h2 id="title">Loading...</h2>
-        <p id="artist">Artist</p>
+    <div id="meta" class="ui-layer">
+        <h2 id="title">{{ _('Loading...') }}</h2>
+        <p id="artist">{{ _('Artist') }}</p>
     </div>
 
-    <div id="controls" onclick="exit()">
-        [Exit Zen Mode]
+    <div id="settings-btn" class="ui-layer" data-bs-toggle="modal" data-bs-target="#settingsModal">
+        <i class="bi bi-gear-fill"></i>
     </div>
 
+    <div id="controls-bottom" class="ui-layer" onclick="exit()">
+        <button class="btn btn-outline-light btn-sm rounded-pill px-3">{{ _('Exit Zen Mode') }}</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content dark-glass">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title">{{ _('Slideshow Settings') }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="intervalRange" class="form-label">{{ _('Interval (seconds)') }}: <span id="intervalVal">5</span>s</label>
+                        <input type="range" class="form-range" min="3" max="60" step="1" id="intervalRange" value="5">
+                    </div>
+                    <!-- Future: Order (Random/Sequential) can be added here if backend supports it via param or frontend shuffle -->
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let works = [];
     let currentIndex = 0;
+    let timer = null;
+    let intervalTime = parseInt(localStorage.getItem('zen_interval')) || 5000;
+
     const imgElement = document.getElementById('slide-img');
     const titleElement = document.getElementById('title');
     const artistElement = document.getElementById('artist');
+    const intervalRange = document.getElementById('intervalRange');
+    const intervalVal = document.getElementById('intervalVal');
 
-    // Fetch top 100 high scoring images for slideshow
+    // Init settings UI
+    intervalRange.value = intervalTime / 1000;
+    intervalVal.textContent = intervalRange.value;
+
+    intervalRange.addEventListener('input', (e) => {
+        const seconds = e.target.value;
+        intervalVal.textContent = seconds;
+        intervalTime = seconds * 1000;
+        localStorage.setItem('zen_interval', intervalTime);
+
+        // Restart timer
+        if (timer) clearInterval(timer);
+        timer = setInterval(showNext, intervalTime);
+    });
+
+    // Fetch top works for slideshow
     fetch('{{ url_for("main.slideshow_data") }}')
         .then(r => r.json())
         .then(data => {
             works = data;
             if(works.length > 0) {
                 showNext();
-                setInterval(showNext, 5000); // 5 seconds per slide
+                timer = setInterval(showNext, intervalTime);
             } else {
-                titleElement.textContent = "No works found.";
+                titleElement.textContent = "{{ _('No works found.') }}";
             }
         });
 

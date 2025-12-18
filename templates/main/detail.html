@@ -54,7 +54,7 @@
         {% if work.work_type == 'Novel' %}
             <div class="card mb-3">
                 <div class="card-header d-flex flex-wrap gap-2 align-items-center bg-light">
-                    <span class="me-2"><i class="bi bi-gear-fill"></i> Settings:</span>
+                    <span class="me-2"><i class="bi bi-gear-fill"></i> {{ _('Settings') }}:</span>
 
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-outline-secondary" onclick="adjustFontSize(-2)"><i class="bi bi-dash"></i></button>
@@ -71,9 +71,9 @@
                     </div>
 
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-light border" onclick="setBg('light')" title="Light">A</button>
-                        <button class="btn btn-warning border" style="background-color: #f4ecd8; border-color: #e9e0c9;" onclick="setBg('sepia')" title="Sepia">A</button>
-                        <button class="btn btn-dark border" onclick="setBg('dark')" title="Dark">A</button>
+                        <button class="btn btn-light border" onclick="setBg('light')" title="{{ _('Light') }}">A</button>
+                        <button class="btn btn-warning border" style="background-color: #f4ecd8; border-color: #e9e0c9;" onclick="setBg('sepia')" title="{{ _('Sepia') }}">A</button>
+                        <button class="btn btn-dark border" onclick="setBg('dark')" title="{{ _('Dark') }}">A</button>
                     </div>
                 </div>
                 <div class="card-body" id="novel-container" style="white-space: pre-wrap; font-family: serif; line-height: 1.8; min-height: 500px; font-size: 16px;">
