@@ -3,6 +3,7 @@ from collections import Counter
 from flask import Blueprint, render_template, request, current_app, send_from_directory, abort, flash, session, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import desc, asc
+from sqlalchemy.orm import joinedload
 from app.models import Work, History, User, work_likes, bookmarks, Series
 from app.extensions import db
 import imagehash
@@ -371,7 +372,8 @@ def history():
 @login_required
 def xp_dashboard():
     # 1. Top Tags from History
-    history_items = History.query.filter_by(user_id=current_user.id).all()
+    # Optimization: Use joinedload to prevent N+1 queries for 'work' relationship
+    history_items = History.query.options(joinedload(History.work)).filter_by(user_id=current_user.id).all()
     history_tags = []
     # Data for charts
     artist_counts = Counter()
