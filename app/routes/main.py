@@ -3,7 +3,8 @@ from collections import Counter
 from flask import Blueprint, render_template, request, current_app, send_from_directory, abort, flash, session, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import desc, asc
-from app.models import Work, History, User, work_likes, bookmarks, Series
+from sqlalchemy.orm import joinedload
+from app.models import Work, History, User, work_likes, bookmarks, Series, Image
 from app.extensions import db
 import imagehash
 from PIL import Image as PILImage
@@ -48,6 +49,19 @@ def slideshow_data():
     # For now just top 50 descending view count
     works = Work.query.order_by(desc(Work.view_count)).limit(50).all()
 
+    # Optimization: Batch fetch images to prevent N+1 queries
+    # Since Work.images is dynamic, joinedload doesn't populate it as a list properly.
+    # We fetch all images for these works in one query.
+    work_ids = [w.id for w in works if w.work_type == 'Illustration']
+    images_by_work = {}
+
+    if work_ids:
+        # Fetch first page (p_num=0) for each work
+        # If we need ALL images, we'd remove p_num filter, but slideshow usually uses one.
+        # Using p_num=0 is efficient.
+        images = Image.query.filter(Image.work_id.in_(work_ids), Image.p_num == 0).all()
+        images_by_work = {img.work_id: img for img in images}
+
     # Shuffle them to make it interesting each time? Or just top sorted.
     # Let's shuffle the top 50 in python
     import random
@@ -58,9 +72,14 @@ def slideshow_data():
         # Use full image not thumbnail for slideshow if possible? Or thumb if high res enough.
         # "Pixiv Local" thumb is 360x360 usually.
         # But we serve raw files via serve_data. Let's use serve_data (original file) if it's an image.
-        if w.work_type == 'Illustration' and w.images.count() > 0:
-            # Pick first image
-            img = w.images.first()
+        if w.work_type == 'Illustration':
+            # Check pre-fetched images
+            img = images_by_work.get(w.id)
+            if not img and w.images.count() > 0:
+                # Fallback if p_num=0 missing but other images exist (rare)
+                # This triggers N+1 but only for edge cases
+                img = w.images.first()
+
             if img:
                 data.append({
                     'title': w.title,
@@ -371,7 +390,8 @@ def history():
 @login_required
 def xp_dashboard():
     # 1. Top Tags from History
-    history_items = History.query.filter_by(user_id=current_user.id).all()
+    # Optimization: Use joinedload to prevent N+1 queries for 'work' relationship
+    history_items = History.query.options(joinedload(History.work)).filter_by(user_id=current_user.id).all()
     history_tags = []
     # Data for charts
     artist_counts = Counter()
