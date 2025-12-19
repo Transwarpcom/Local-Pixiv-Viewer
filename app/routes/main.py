@@ -450,8 +450,25 @@ def serve_preview(filename):
     # Preserve directory structure or flatten? Flattening is risky for collisions.
     # Replicating structure is safer.
     rel_path = filename
-    original_path = os.path.join(data_dir, rel_path)
-    preview_path = os.path.join(preview_dir, rel_path)
+
+    # Security: Prevent path traversal
+    # Resolve absolute paths and check they are within the expected directories
+    abs_data_dir = os.path.abspath(data_dir)
+    abs_original_path = os.path.abspath(os.path.join(data_dir, rel_path))
+
+    if not abs_original_path.startswith(abs_data_dir):
+        abort(404)
+
+    original_path = abs_original_path
+
+    # Also secure the preview path to prevent writing outside THUMBS_DIR
+    abs_preview_dir = os.path.abspath(preview_dir)
+    abs_preview_path = os.path.abspath(os.path.join(preview_dir, rel_path))
+
+    if not abs_preview_path.startswith(abs_preview_dir):
+        abort(404)
+
+    preview_path = abs_preview_path
 
     if not os.path.exists(original_path):
         abort(404)
