@@ -450,8 +450,15 @@ def serve_preview(filename):
     # Preserve directory structure or flatten? Flattening is risky for collisions.
     # Replicating structure is safer.
     rel_path = filename
-    original_path = os.path.join(data_dir, rel_path)
-    preview_path = os.path.join(preview_dir, rel_path)
+
+    # Security: Prevent path traversal
+    original_path = os.path.abspath(os.path.join(data_dir, rel_path))
+    preview_path = os.path.abspath(os.path.join(preview_dir, rel_path))
+
+    if not original_path.startswith(os.path.abspath(data_dir)):
+        abort(404)
+    if not preview_path.startswith(os.path.abspath(preview_dir)):
+        abort(404)
 
     if not os.path.exists(original_path):
         abort(404)
