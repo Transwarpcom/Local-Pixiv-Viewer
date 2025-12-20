@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, current_app, send_from_di
 from flask_login import login_required, current_user
 from sqlalchemy import desc, asc
 from sqlalchemy.orm import joinedload
-from app.models import Work, History, User, work_likes, bookmarks, Series
+from app.models import Work, History, User, work_likes, bookmarks, Series, Image
 from app.extensions import db
 import imagehash
 from PIL import Image as PILImage
@@ -54,14 +54,32 @@ def slideshow_data():
     import random
     random.shuffle(works)
 
+    # Optimization: Batch fetch images for selected works
+    # w.images is lazy='dynamic' which triggers query on access.
+    # We fetch the first image (p_num=0) for all works in one go.
+    illustration_ids = [w.id for w in works if w.work_type == 'Illustration']
+    image_map = {}
+
+    if illustration_ids:
+        # Fetch images with p_num=0 for these works
+        images = Image.query.filter(Image.work_id.in_(illustration_ids), Image.p_num == 0).all()
+        for img in images:
+            image_map[img.work_id] = img
+
     data = []
     for w in works:
         # Use full image not thumbnail for slideshow if possible? Or thumb if high res enough.
         # "Pixiv Local" thumb is 360x360 usually.
         # But we serve raw files via serve_data. Let's use serve_data (original file) if it's an image.
-        if w.work_type == 'Illustration' and w.images.count() > 0:
-            # Pick first image
-            img = w.images.first()
+        if w.work_type == 'Illustration':
+            # Use pre-fetched image if available
+            img = image_map.get(w.id)
+
+            # Fallback if p_num=0 is missing (rare case), fallback to dynamic query
+            if not img:
+                 if w.images.count() > 0:
+                     img = w.images.first()
+
             if img:
                 data.append({
                     'title': w.title,
