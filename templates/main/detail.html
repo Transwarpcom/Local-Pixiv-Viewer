@@ -68,6 +68,17 @@
 
                         <input type="radio" class="btn-check" name="writing-mode" id="wm-vertical" autocomplete="off" onclick="setWritingMode('vertical-rl')" aria-label="Vertical writing mode">
                         <label class="btn btn-outline-secondary" for="wm-vertical"><i class="bi bi-distribute-vertical"></i></label>
+                        <button class="btn btn-outline-secondary" onclick="adjustFontSize(-2)" aria-label="{{ _('Decrease font size') }}"><i class="bi bi-dash"></i></button>
+                        <span class="btn btn-outline-secondary disabled" id="font-size-display" aria-hidden="true">16px</span>
+                        <button class="btn btn-outline-secondary" onclick="adjustFontSize(2)" aria-label="{{ _('Increase font size') }}"><i class="bi bi-plus"></i></button>
+                    </div>
+
+                    <div class="btn-group btn-group-sm">
+                        <input type="radio" class="btn-check" name="writing-mode" id="wm-horizontal" autocomplete="off" checked onclick="setWritingMode('horizontal-tb')">
+                        <label class="btn btn-outline-secondary" for="wm-horizontal" aria-label="{{ _('Horizontal writing mode') }}"><i class="bi bi-distribute-horizontal"></i></label>
+
+                        <input type="radio" class="btn-check" name="writing-mode" id="wm-vertical" autocomplete="off" onclick="setWritingMode('vertical-rl')">
+                        <label class="btn btn-outline-secondary" for="wm-vertical" aria-label="{{ _('Vertical writing mode') }}"><i class="bi bi-distribute-vertical"></i></label>
                     </div>
 
                     <div class="btn-group btn-group-sm">
