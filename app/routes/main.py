@@ -483,6 +483,13 @@ def serve_preview(filename):
     rel_path = filename
 
     # Security: Prevent path traversal
+    original_path = os.path.abspath(os.path.join(data_dir, rel_path))
+    preview_path = os.path.abspath(os.path.join(preview_dir, rel_path))
+
+    if not original_path.startswith(os.path.abspath(data_dir)):
+        abort(404)
+    if not preview_path.startswith(os.path.abspath(preview_dir)):
+        abort(404)
     # Resolve absolute paths and check they are within the expected directories
     abs_data_dir = os.path.abspath(data_dir)
     abs_original_path = os.path.abspath(os.path.join(data_dir, rel_path))
