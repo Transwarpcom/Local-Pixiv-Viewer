@@ -53,6 +53,17 @@ def slideshow_data():
     # Let's shuffle the top 50 in python
     random.shuffle(works)
 
+    # Optimization: Batch fetch images for selected works
+    # w.images is lazy='dynamic' which triggers query on access.
+    # We fetch the first image (p_num=0) for all works in one go.
+    illustration_ids = [w.id for w in works if w.work_type == 'Illustration']
+    image_map = {}
+
+    if illustration_ids:
+        # Fetch images with p_num=0 for these works
+        images = Image.query.filter(Image.work_id.in_(illustration_ids), Image.p_num == 0).all()
+        for img in images:
+            image_map[img.work_id] = img
     # Optimization: Batch fetch images to avoid N+1 queries.
     # We explicitly fetch images with p_num=0 for the selected works.
     work_ids = [w.id for w in works]
@@ -67,6 +78,13 @@ def slideshow_data():
         # "Pixiv Local" thumb is 360x360 usually.
         # But we serve raw files via serve_data. Let's use serve_data (original file) if it's an image.
         if w.work_type == 'Illustration':
+            # Use pre-fetched image if available
+            img = image_map.get(w.id)
+
+            # Fallback if p_num=0 is missing (rare case), fallback to dynamic query
+            if not img:
+                 if w.images.count() > 0:
+                     img = w.images.first()
             # Try to get from batch first
             img = image_map.get(w.id)
 
