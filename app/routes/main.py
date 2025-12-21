@@ -51,7 +51,6 @@ def slideshow_data():
 
     # Shuffle them to make it interesting each time? Or just top sorted.
     # Let's shuffle the top 50 in python
-    import random
     random.shuffle(works)
 
     # Optimization: Batch fetch images for selected works
@@ -65,6 +64,13 @@ def slideshow_data():
         images = Image.query.filter(Image.work_id.in_(illustration_ids), Image.p_num == 0).all()
         for img in images:
             image_map[img.work_id] = img
+    # Optimization: Batch fetch images to avoid N+1 queries.
+    # We explicitly fetch images with p_num=0 for the selected works.
+    work_ids = [w.id for w in works]
+    image_map = {}
+    if work_ids:
+        images = Image.query.filter(Image.work_id.in_(work_ids), Image.p_num == 0).all()
+        image_map = {img.work_id: img for img in images}
 
     data = []
     for w in works:
@@ -79,6 +85,13 @@ def slideshow_data():
             if not img:
                  if w.images.count() > 0:
                      img = w.images.first()
+            # Try to get from batch first
+            img = image_map.get(w.id)
+
+            # Fallback: if p_num=0 is missing (rare), query specifically for this work
+            # This maintains correctness while optimizing the common case.
+            if not img:
+                img = w.images.first()
 
             if img:
                 data.append({
@@ -468,8 +481,25 @@ def serve_preview(filename):
     # Preserve directory structure or flatten? Flattening is risky for collisions.
     # Replicating structure is safer.
     rel_path = filename
-    original_path = os.path.join(data_dir, rel_path)
-    preview_path = os.path.join(preview_dir, rel_path)
+
+    # Security: Prevent path traversal
+    # Resolve absolute paths and check they are within the expected directories
+    abs_data_dir = os.path.abspath(data_dir)
+    abs_original_path = os.path.abspath(os.path.join(data_dir, rel_path))
+
+    if not abs_original_path.startswith(abs_data_dir):
+        abort(404)
+
+    original_path = abs_original_path
+
+    # Also secure the preview path to prevent writing outside THUMBS_DIR
+    abs_preview_dir = os.path.abspath(preview_dir)
+    abs_preview_path = os.path.abspath(os.path.join(preview_dir, rel_path))
+
+    if not abs_preview_path.startswith(abs_preview_dir):
+        abort(404)
+
+    preview_path = abs_preview_path
 
     if not os.path.exists(original_path):
         abort(404)
